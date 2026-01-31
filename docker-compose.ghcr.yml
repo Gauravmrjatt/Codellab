@@ -14,7 +14,7 @@ services:
 
   web:
     # build: ./codellab
-    image: ghcr.io/gauravchaudhary/codellab-web:latest
+    image: ghcr.io/gauravmrjatt/codellab-web:latest
     container_name: codellab-web
     restart: always
     ports:
@@ -32,7 +32,7 @@ services:
 
   socket:
     # build: ./socket-service
-    image: ghcr.io/gauravchaudhary/codellab-socket:latest
+    image: ghcr.io/gauravmrjatt/codellab-socket:latest
     container_name: codellab-socket
     restart: always
     ports:
@@ -44,7 +44,7 @@ services:
 
   judge:
     # build: ./judge-service
-    image: ghcr.io/gauravchaudhary/codellab-judge:latest
+    image: ghcr.io/gauravmrjatt/codellab-judge:latest
     container_name: codellab-judge
     restart: always
     ports:

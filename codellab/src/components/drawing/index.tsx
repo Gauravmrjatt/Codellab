@@ -1,3 +1,4 @@
+"use client"
 import { useEffect, useState, useRef } from "react"
 import { Tldraw, Editor, TLUiOverrides } from "tldraw"
 import "tldraw/tldraw.css"
