@@ -1,0 +1,121 @@
+{
+  "grid": {
+    "root": {
+      "type": "branch",
+      "data": [
+        {
+          "type": "leaf",
+          "data": {
+            "views": [
+              "files",
+              "editor",
+              "participants",
+              "chat"
+            ],
+            "activeView": "editor",
+            "id": "1"
+          },
+          "size": 883.5
+        },
+        {
+          "type": "leaf",
+          "data": {
+            "views": [
+              "output",
+              "console"
+            ],
+            "activeView": "console",
+            "id": "2"
+          },
+          "size": 807.5
+        }
+      ],
+      "size": 917
+    },
+    "width": 1694,
+    "height": 917,
+    "orientation": "HORIZONTAL"
+  },
+  "panels": {
+    "files": {
+      "id": "files",
+      "contentComponent": "sidebar",
+      "tabComponent": "default",
+      "params": {
+        "type": "files",
+        "files": [
+          {
+            "name": "main.js",
+            "language": "javascript",
+            "content": "// Main solution file"
+          }
+        ],
+        "activeFile": "main.js"
+      },
+      "title": "files",
+      "minimumHeight": 45,
+      "minimumWidth": 45
+    },
+    "editor": {
+      "id": "editor",
+      "contentComponent": "editor",
+      "tabComponent": "default",
+      "params": {
+        "roomId": "cmk88rw11000dupx1h8zh5j1g",
+        "code": "// Welcome to CodeLab!\nvar a = \"abc\" === \"abc\";\nfunction solution() {\n// Your solution here,\n  return \"Hello, ggWorld!\";\n}\n\nconsole.log(solution())",
+        "language": "javascript",
+        "isRunning": false
+      },
+      "title": "Code",
+      "minimumHeight": 45,
+      "minimumWidth": 500
+    },
+    "participants": {
+      "id": "participants",
+      "contentComponent": "sidebar",
+      "tabComponent": "default",
+      "params": {
+        "type": "participants"
+      },
+      "title": "Participants",
+      "minimumHeight": 45,
+      "minimumWidth": 45
+    },
+    "chat": {
+      "id": "chat",
+      "contentComponent": "sidebar",
+      "tabComponent": "default",
+      "params": {
+        "type": "chat"
+      },
+      "title": "Chat",
+      "minimumHeight": 45,
+      "minimumWidth": 45
+    },
+    "output": {
+      "id": "output",
+      "contentComponent": "output",
+      "tabComponent": "default",
+      "params": {
+        "type": "output",
+        "output": "",
+        "isRunning": false
+      },
+      "title": "Output",
+      "minimumHeight": 45
+    },
+    "console": {
+      "id": "console",
+      "contentComponent": "console",
+      "tabComponent": "default",
+      "params": {
+        "type": "console",
+        "logs": "",
+        "isRunning": false
+      },
+      "title": "Console",
+      "minimumHeight": 45
+    }
+  },
+  "activeGroup": "1"
+}

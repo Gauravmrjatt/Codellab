@@ -1,0 +1,303 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String               @id @default(cuid())
+  username         String               @unique
+  email            String               @unique
+  password         String
+  role             Role                 @default(USER)
+  avatarUrl        String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  lastSeen         DateTime?
+  participations   ContestParticipant[]
+  messages         Message[]
+  permissions      Permission[]
+  createdQuestions Question[]           @relation("QuestionCreator")
+  rooms            Room[]               @relation("RoomOwner")
+  memberships      RoomMember[]
+  submissions      Submission[]
+  cheatLogs        CheatLog[]
+}
+
+model Contest {
+  id           String               @id @default(cuid())
+  title        String
+  description  String?
+  startTime    DateTime
+  endTime      DateTime
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  participants ContestParticipant[]
+  questions    ContestQuestion[]
+  submissions  Submission[]
+}
+
+model Question {
+  id           String            @id @default(cuid())
+  title        String
+  slug         String            @unique
+  description  String
+  difficulty   Difficulty
+  points       Int               @default(100)
+  timeLimit    Int               @default(1000)
+  memoryLimit  Int               @default(256)
+  starterCode  String?
+  solution     String?
+  functionName String            @default("solve")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  authorId     String?
+  contests     ContestQuestion[]
+  inputs       InputDefinition[]
+  output       OutputDefinition?
+  author       User?             @relation("QuestionCreator", fields: [authorId], references: [id])
+  tags         QuestionTag[]
+  submissions  Submission[]
+  testCases    TestCase[]
+}
+
+model InputDefinition {
+  id          String    @id @default(cuid())
+  questionId  String
+  name        String
+  type        InputType
+  description String?
+  order       Int
+  question    Question  @relation(fields: [questionId], references: [id])
+}
+
+model OutputDefinition {
+  id          String    @id @default(cuid())
+  questionId  String    @unique
+  type        InputType
+  description String?
+  question    Question  @relation(fields: [questionId], references: [id])
+}
+
+model ContestQuestion {
+  contestId  String
+  questionId String
+  order      Int      @default(0)
+  points     Int
+  question   Question @relation(fields: [questionId], references: [id])
+  contest    Contest  @relation(fields: [contestId], references: [id])
+
+  @@id([contestId, questionId])
+}
+
+model TestCase {
+  id             String     @id @default(cuid())
+  questionId     String
+  input          String?
+  output         String?
+  inputs         Json?
+  expectedOutput Json?
+  visibility     Visibility @default(PUBLIC)
+  isPublic       Boolean?   @default(false)
+  question       Question   @relation(fields: [questionId], references: [id])
+}
+
+model Submission {
+  id           String            @id @default(cuid())
+  code         String
+  language     String
+  status       SubmissionStatus  @default(PENDING)
+  runtime      Int?
+  memory       Int?
+  passedTests  Int?
+  totalTests   Int?
+  errorMessage String?
+  createdAt    DateTime          @default(now())
+  userId       String
+  questionId   String
+  contestId    String?
+  cheatLogs    CheatLog[]
+  contest      Contest?          @relation(fields: [contestId], references: [id])
+  question     Question          @relation(fields: [questionId], references: [id])
+  user         User              @relation(fields: [userId], references: [id])
+  events       SubmissionEvent[]
+}
+
+model ContestParticipant {
+  id         String    @id @default(cuid())
+  contestId  String
+  userId     String
+  score      Int       @default(0)
+  rank       Int?
+  finishTime DateTime?
+  user       User      @relation(fields: [userId], references: [id])
+  contest    Contest   @relation(fields: [contestId], references: [id])
+
+  @@unique([contestId, userId])
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  questions QuestionTag[]
+}
+
+model QuestionTag {
+  questionId String
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id])
+
+  @@id([questionId, tagId])
+}
+
+model Room {
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  inviteCode      String          @unique
+  ownerId         String
+  isPublic        Boolean         @default(false)
+  maxParticipants Int             @default(5)
+  language        String          @default("javascript")
+  difficulty      String          @default("medium")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  drawing         Drawing?
+  files           File[]
+  messages        Message[]
+  permissions     Permission[]
+  owner           User            @relation("RoomOwner", fields: [ownerId], references: [id])
+  members         RoomMember[]
+  tiptapDoc       TipTapDocument?
+}
+
+model RoomMember {
+  id       String   @id @default(cuid())
+  roomId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  room     Room     @relation(fields: [roomId], references: [id])
+
+  @@unique([roomId, userId])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  path      String
+  content   String
+  roomId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  room      Room     @relation(fields: [roomId], references: [id])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  content        String
+  type           String   @default("text")
+  userId         String
+  roomId         String
+  mentionedUsers Json?    // Store mentioned users as JSON
+  createdAt      DateTime @default(now())
+  room           Room     @relation(fields: [roomId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model Permission {
+  id            String  @id @default(cuid())
+  roomId        String
+  userId        String
+  role          String
+  canWriteCode  Boolean @default(true)
+  canWriteNotes Boolean @default(true)
+  canDraw       Boolean @default(true)
+  user          User    @relation(fields: [userId], references: [id])
+  room          Room    @relation(fields: [roomId], references: [id])
+
+  @@unique([roomId, userId])
+}
+
+model CheatLog {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  submissionId String?
+  type         String
+  severity     Int
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+  submission   Submission? @relation(fields: [submissionId], references: [id])
+}
+
+model SubmissionEvent {
+  id           String     @id @default(cuid())
+  submissionId String
+  eventType    String
+  deltaLength  Int
+  timestamp    DateTime   @default(now())
+  metadata     Json?
+  submission   Submission @relation(fields: [submissionId], references: [id])
+}
+
+model Drawing {
+  id        String   @id @default(cuid())
+  roomId    String   @unique
+  snapshot  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  room      Room     @relation(fields: [roomId], references: [id])
+}
+
+model TipTapDocument {
+  id        String   @id @default(cuid())
+  roomId    String   @unique
+  state     Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  room      Room     @relation(fields: [roomId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+}
+
+enum InputType {
+  INT
+  FLOAT
+  STRING
+  BOOLEAN
+  INT_ARRAY
+  FLOAT_ARRAY
+  STRING_ARRAY
+  BOOLEAN_ARRAY
+  INT_MATRIX
+  STRING_MATRIX
+}
+
+enum Visibility {
+  PUBLIC
+  HIDDEN
+}

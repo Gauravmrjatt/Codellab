@@ -1,0 +1,107 @@
+/* =====================================================
+   ROOT
+===================================================== */
+.dockview-theme-leetcode {
+  background-color: #1b1b1b;
+  color: #e5e5e5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* =====================================================
+   TAB BAR
+===================================================== */
+.dockview-theme-leetcode .dv-tabs-and-actions-container {
+  background-color: #1f1f1f;
+  border-bottom: 1px solid #2f2f2f;
+}
+
+/* =====================================================
+   TABS
+===================================================== */
+.dockview-theme-leetcode .dv-tab {
+  background-color: #1f1f1f;
+  color: #9b9b9b;
+  border-right: 1px solid #2f2f2f;
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 0;
+}
+
+/* Hover tab */
+.dockview-theme-leetcode .dv-tab:hover {
+  background-color: #262626;
+}
+
+/* Active tab */
+.dockview-theme-leetcode .dv-tab.dv-active {
+  background-color: #262626;
+  color: #ffffff;
+  border-bottom: 2px solid #4caf50;
+}
+
+/* Remove focus ring */
+.dockview-theme-leetcode .dv-tab:focus {
+  outline: none;
+}
+
+/* =====================================================
+   TAB CLOSE BUTTON
+===================================================== */
+.dockview-theme-leetcode .dv-tab-close {
+  color: #7a7a7a;
+}
+
+.dockview-theme-leetcode .dv-tab-close:hover {
+  color: #ff6b6b;
+}
+
+/* =====================================================
+   PANEL CONTENT
+===================================================== */
+.dockview-theme-leetcode .dv-content-container {
+  background-color: #1b1b1b;
+}
+
+/* =====================================================
+   GROUP / PANEL BORDERS
+===================================================== */
+.dockview-theme-leetcode .dv-groupview {
+  border-right: 1px solid #2f2f2f;
+}
+
+/* =====================================================
+   SPLIT PANE SEPARATOR SPACE
+===================================================== */
+.dockview-theme-leetcode .dv-sash {
+  background-color: #262626;
+  z-index: 10;
+}
+
+/* Vertical separator (left-right) */
+.dockview-theme-leetcode .dv-sash.dv-vertical {
+  width: 6px;               /* SPACE */
+  cursor: col-resize;
+}
+
+/* Horizontal separator (top-bottom) */
+.dockview-theme-leetcode .dv-sash.dv-horizontal {
+  height: 6px;              /* SPACE */
+  cursor: row-resize;
+}
+
+/* Hover effect */
+.dockview-theme-leetcode .dv-sash:hover {
+  background-color: #4caf50;
+}
+
+/* =====================================================
+   ACTION BUTTONS (+, ⋮)
+===================================================== */
+.dockview-theme-leetcode .dv-action-button {
+  color: #9b9b9b;
+}
+
+.dockview-theme-leetcode .dv-action-button:hover {
+  color: #ffffff;
+}
