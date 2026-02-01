@@ -49,8 +49,10 @@ export function useCodeCoordinator({
     setLanguage,
     setIsRunning,
     setRoomId,
+    setQuestionId,
     setTestCaseResults,
     init,
+    reset,
   } = useCodeEditorStore()
   const { applyExecutionState } = useExecutionState()
   const { dockviewRef } = useDockRefStore()
@@ -71,6 +73,20 @@ export function useCodeCoordinator({
   const lastEditNotification = useRef<number>(0)
   const isEditingRef = useRef<boolean>(false)
 
+  // Reset and initialize store when context changes
+  useEffect(() => {
+    const store = useCodeEditorStore.getState()
+    if ((roomId && store.roomId !== roomId) || (questionId && store.questionId !== questionId)) {
+      reset()
+      if (roomId) setRoomId(roomId)
+      if (questionId) setQuestionId(questionId)
+    } else {
+      // Ensure IDs are set even if no reset needed (e.g. hydration)
+      if (roomId && !store.roomId) setRoomId(roomId)
+      if (questionId && !store.questionId) setQuestionId(questionId)
+    }
+  }, [roomId, questionId, reset, setRoomId, setQuestionId])
+
   useEffect(() => {
     // If we have a questionId, fetch the default code for that question
     if (questionId) {
@@ -79,7 +95,7 @@ export function useCodeCoordinator({
           const res = await fetch(`/api/questions/${questionId}/default-code?lang=${currentLanguage}&autoGenerate=true`);
           if (!res.ok) throw new Error("Failed to load default");
           const data = await res.json();
-          init(data.code, initialLanguage, true)
+          init(data.code, initialLanguage, false)
         } catch (e) {
           return null;
         } finally {
@@ -89,15 +105,10 @@ export function useCodeCoordinator({
     } else {
 
       if (initialCode || initialLanguage) {
-        init(initialCode, initialLanguage, true);
+        init(initialCode, initialLanguage, false);
       }
     }
   }, [questionId, initialCode, initialLanguage])
-
-  // Sync roomId & questionId when they change
-  useEffect(() => {
-    if (roomId !== undefined) setRoomId(roomId)
-  }, [roomId, setRoomId])
 
   // used to detect for paste cheating
   const recordChange = (newCode: string) => {

@@ -70,25 +70,40 @@ function CollaborativeEditorContent({
     setIsMounted(true)
   }, [])
 
-  // Handle remote code change
-  const handleRemoteCodeChange = useCallback((change: any) => {
-    if (change.userId !== currentUserId) {
-      const newCode = change.changes[0]?.content;
-      if (newCode !== undefined) {
-        setCode(newCode);
-      }
-    }
-  }, [currentUserId]);
-
   const [remoteOutput, setRemoteOutput] = useState<any>(undefined)
   const [remoteLogs, setRemoteLogs] = useState<any>(undefined)
 
-  const handleRemoteOutput = useCallback((data: { output: any; logs: any }) => {
-    setRemoteOutput(data.output)
-    setRemoteLogs(data.logs)
-  }, [])
+  const { participants: wsParticipants, isConnected, sendCodeChange, cursors, sendCursorPosition, sendOutput, socket } = useWS()
 
-  const { participants: wsParticipants, isConnected, sendCodeChange, cursors, sendCursorPosition, sendOutput } = useWS()
+  // Listen for remote code changes
+  useEffect(() => {
+    if (!socket) return
+
+    const onRemoteChange = (change: any) => {
+      if (change.userId !== currentUserId) {
+        const newCode = change.changes[0]?.content
+        const changedFileId = change.fileId
+
+        setFiles(prev => prev.map(file => {
+          if (file.name === changedFileId) {
+            return { ...file, content: newCode }
+          }
+          return file
+        }))
+
+        // If the changed file is the active one, update the editor view
+        if (changedFileId === activeFile) {
+          setCode(newCode)
+        }
+      }
+    }
+
+    socket.on("code:change", onRemoteChange)
+
+    return () => {
+      socket.off("code:change", onRemoteChange)
+    }
+  }, [socket, currentUserId, activeFile])
 
   // Merge initial participants (from DB) with WebSocket participants (live status)
   const activeParticipants = useMemo(() => {

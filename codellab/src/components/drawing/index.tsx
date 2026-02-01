@@ -42,7 +42,7 @@ export function Whiteboard() {
     const { theme } = useTheme()
     const [editor, setEditor] = useState<Editor | null>(null)
     const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
-    const { socket, requestDrawingSnapshot, participants, userId } = useWS()
+    const { socket, requestDrawingSnapshot, participants, userId, roomId } = useWS()
 
     // Use refs to avoid recreating Yjs objects on every render
     const yDocRef = useRef<Y.Doc | null>(null)
@@ -118,7 +118,7 @@ export function Whiteboard() {
             const mergedUpdate = Y.mergeUpdates(updates)
             
             // Send as raw binary
-            socket.emit('drawing:yjs-update', mergedUpdate)
+            socket.emit('drawing:yjs-update', { roomId, update: mergedUpdate })
             
             // Optimistic "Saving..." state (Server will confirm with 'drawing:saved')
             setSaveStatus('saving')

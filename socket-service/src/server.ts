@@ -382,7 +382,7 @@ io.on("connection", async (socket) => {
 
   socket.on("code:change", (data: CodeChange) => {
     // Legacy broadcast disabled in favor of Yjs
-    // socket.to(data.roomId).emit("code:change", data);
+    socket.to(data.roomId).emit("code:change", data);
 
     // Paste/cheat detection logic (unchanged)
     if (data.changes && Array.isArray(data.changes)) {
