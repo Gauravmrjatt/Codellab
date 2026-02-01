@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono , JetBrains_Mono} from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Layout } from "@/components/layout";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
+import "tldraw/tldraw.css"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

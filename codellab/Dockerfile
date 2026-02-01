@@ -28,6 +28,10 @@ COPY . .
 RUN mkdir -p /tmp/codellab-execution \
     && chmod -R 777 /tmp/codellab-execution
 
+# Build args
+ARG NEXT_PUBLIC_SOCKET_URL
+ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
+
 # Build Next.js
 RUN pnpm build
 

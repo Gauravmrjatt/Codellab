@@ -1,10 +1,44 @@
 "use client"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, Component, ReactNode } from "react"
 import { Tldraw, Editor, TLUiOverrides } from "tldraw"
-import "tldraw/tldraw.css"
 import { useTheme } from "next-themes"
 import { useWS } from "@/context/WebSocketProvider"
 import * as Y from "yjs"
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(_: Error) {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("Whiteboard crashed:", error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-full w-full items-center justify-center bg-muted/50 text-muted-foreground">
+          <div className="text-center">
+            <p className="mb-2 text-lg font-medium">Something went wrong</p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 const overrides: TLUiOverrides = {
   actions: (_editor, actions) => {
@@ -268,61 +302,63 @@ export function Whiteboard() {
     }, [editor, canDraw])
 
     return (
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* Status Overlay */}
-            <div className="absolute top-2 right-2 z-[1000] flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm p-1.5 rounded-lg border border-black/5 dark:border-white/5 shadow-sm text-xs font-medium">
-                {/* Save Status */}
-                <span className={`px-2 py-0.5 rounded-md ${saveStatus === 'saved' ? 'text-green-600 bg-green-500/10' :
-                    saveStatus === 'saving' ? 'text-amber-600 bg-amber-500/10' :
-                        'text-zinc-500'
-                    }`}>
-                    {saveStatus === 'saved' ? 'Saved' :
-                        saveStatus === 'saving' ? 'Saving...' : 'Unsaved'}
-                </span>
+        <ErrorBoundary>
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                {/* Status Overlay */}
+                <div className="absolute top-2 right-2 z-[1000] flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm p-1.5 rounded-lg border border-black/5 dark:border-white/5 shadow-sm text-xs font-medium">
+                    {/* Save Status */}
+                    <span className={`px-2 py-0.5 rounded-md ${saveStatus === 'saved' ? 'text-green-600 bg-green-500/10' :
+                        saveStatus === 'saving' ? 'text-amber-600 bg-amber-500/10' :
+                            'text-zinc-500'
+                        }`}>
+                        {saveStatus === 'saved' ? 'Saved' :
+                            saveStatus === 'saving' ? 'Saving...' : 'Unsaved'}
+                    </span>
 
-                {/* Online Users - Presence */}
-                <div className="flex items-center gap-1 pl-2 border-l border-black/10 dark:border-white/10">
-                    <div className="flex -space-x-1.5">
-                        {participants.slice(0, 3).map((p, i) => (
-                            <div key={p.id || i}
-                                title={p.username}
-                                className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] ring-2 ring-white dark:ring-zinc-800 uppercase">
-                                {p.username?.[0] || '?'}
-                            </div>
-                        ))}
+                    {/* Online Users - Presence */}
+                    <div className="flex items-center gap-1 pl-2 border-l border-black/10 dark:border-white/10">
+                        <div className="flex -space-x-1.5">
+                            {participants.slice(0, 3).map((p, i) => (
+                                <div key={p.id || i}
+                                    title={p.username}
+                                    className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] ring-2 ring-white dark:ring-zinc-800 uppercase">
+                                    {p.username?.[0] || '?'}
+                                </div>
+                            ))}
+                        </div>
+                        {participants.length > 3 && (
+                            <span className="text-[10px] text-zinc-500 ml-1">
+                                +{participants.length - 3}
+                            </span>
+                        )}
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 ml-1 animate-pulse" />
                     </div>
-                    {participants.length > 3 && (
-                        <span className="text-[10px] text-zinc-500 ml-1">
-                            +{participants.length - 3}
-                        </span>
+
+                    {/* Permission Notice */}
+                    {!canDraw && (
+                        <div className="absolute bottom-16 right-2 pointer-events-none z-[1001]">
+                            <div className="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm">
+                                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500/50" />
+                                    View Only
+                                </p>
+                            </div>
+                        </div>
                     )}
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 ml-1 animate-pulse" />
                 </div>
 
-                {/* Permission Notice */}
-                {!canDraw && (
-                     <div className="absolute bottom-16 right-2 pointer-events-none z-[1001]">
-                        <div className="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-full shadow-sm">
-                            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-amber-500/50" />
-                                View Only
-                            </p>
-                        </div>
-                    </div>
-                )}
+                <Tldraw
+                    overrides={overrides}
+                    onMount={(editorInstance) => {
+                        setEditor(editorInstance)
+                        editorInstance.user.updateUserPreferences({
+                            colorScheme: theme as "dark" | "light" | "system" | undefined,
+                        })
+                        // Set initial read-only state
+                        editorInstance.updateInstanceState({ isReadonly: !canDraw })
+                    }}
+                />
             </div>
-
-            <Tldraw
-                overrides={overrides}
-                onMount={(editorInstance) => {
-                    setEditor(editorInstance)
-                    editorInstance.user.updateUserPreferences({
-                        colorScheme: theme as "dark" | "light" | "system" | undefined,
-                    })
-                    // Set initial read-only state
-                    editorInstance.updateInstanceState({ isReadonly: !canDraw })
-                }}
-            />
-        </div>
+        </ErrorBoundary>
     )
 }
