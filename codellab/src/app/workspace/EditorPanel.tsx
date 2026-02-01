@@ -70,7 +70,8 @@ export function EditorPanel({
     participants,
     cursors,
     editingUsers,
-    sendCursorPosition
+    sendCursorPosition,
+    defaultCode
   } = useCodeCoordinator({ roomId  , questionId})
 
   const { fontSize, fontFamily, fontLigatures } = useEditorSettingStore()
@@ -256,8 +257,8 @@ export function EditorPanel({
              } catch (e) { console.error("Snapshot load error:", e) }
         } else {
              // If server empty, init with current code (template)
-             if (yText.toString() === "" && code) {
-                 yText.insert(0, code)
+             if (yText.toString() === "" && defaultCode) {
+                 yText.insert(0, defaultCode)
              }
         }
         // Force sync UI

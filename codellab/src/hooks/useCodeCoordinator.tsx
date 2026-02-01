@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useCodeEditorStore } from "@/stores/code-editor-store"
 import { useDockRefStore } from "@/stores/dock-ref-store"
 import { toast } from "sonner"
@@ -51,11 +51,12 @@ export function useCodeCoordinator({
     setRoomId,
     setQuestionId,
     setTestCaseResults,
-    init,
     reset,
   } = useCodeEditorStore()
   const { applyExecutionState } = useExecutionState()
   const { dockviewRef } = useDockRefStore()
+  
+  const [defaultCode, setDefaultCode] = useState(initialCode || templates[initialLanguage as keyof typeof templates] || templates.javascript)
 
   const {
     sendCodeChange,
@@ -95,7 +96,7 @@ export function useCodeCoordinator({
           const res = await fetch(`/api/questions/${questionId}/default-code?lang=${currentLanguage}&autoGenerate=true`);
           if (!res.ok) throw new Error("Failed to load default");
           const data = await res.json();
-          init(data.code, initialLanguage, false)
+          setDefaultCode(data.code)
         } catch (e) {
           return null;
         } finally {
@@ -103,12 +104,13 @@ export function useCodeCoordinator({
       };
       load();
     } else {
-
-      if (initialCode || initialLanguage) {
-        init(initialCode, initialLanguage, false);
+      if (initialCode) {
+        setDefaultCode(initialCode);
+      } else if (initialLanguage) {
+        setDefaultCode(templates[initialLanguage as keyof typeof templates] || templates.javascript)
       }
     }
-  }, [questionId, initialCode, initialLanguage])
+  }, [questionId, initialCode, initialLanguage, currentLanguage])
 
   // used to detect for paste cheating
   const recordChange = (newCode: string) => {

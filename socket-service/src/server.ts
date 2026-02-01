@@ -549,10 +549,31 @@ io.on("connection", async (socket) => {
       if (drawing?.snapshot) {
           // Load into memory for future speed
           const memDoc = getOrCreateYDoc(data.roomId);
-          const state = new Uint8Array(drawing.snapshot as any); // Cast for Prisma/Buffer compat
-          if (state.length > 0) {
-             Y.applyUpdate(memDoc, state);
+          
+          let state: Uint8Array = new Uint8Array();
+          const snapshot = drawing.snapshot as any;
+
+          try {
+            if (snapshot.state) {
+               // Handle Buffer serialized as JSON { type: 'Buffer', data: [...] }
+               if (snapshot.state.type === 'Buffer' && Array.isArray(snapshot.state.data)) {
+                   state = new Uint8Array(snapshot.state.data);
+               } else {
+                   // Try treating as array or buffer directly
+                   state = new Uint8Array(snapshot.state);
+               }
+            } else {
+               // Fallback: maybe stored directly
+               state = new Uint8Array(snapshot);
+            }
+
+            if (state.byteLength > 0) {
+               Y.applyUpdate(memDoc, state);
+            }
+          } catch (e) {
+            console.error("Error hydrating Yjs doc from DB snapshot:", e);
           }
+          
           socket.emit("drawing:snapshot", drawing.snapshot);
       } else {
          socket.emit("drawing:snapshot", null);
@@ -593,6 +614,7 @@ io.on("connection", async (socket) => {
                         snapshot: { state: Buffer.from(snapshot) } as any,
                     },
                 });
+                socket.emit("drawing:saved");
                 // console.log(`[Drawing] Saved ${snapshot.length} bytes for ${roomId}`);
             } catch (err) {
                 console.error("Failed to save drawing:", err);

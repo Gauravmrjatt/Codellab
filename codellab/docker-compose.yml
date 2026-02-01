@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: codellab_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-codellab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codellabpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-codellab}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codellab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - codellab_network
+
+  codellab:
+    container_name: codellab_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-codellab}:${POSTGRES_PASSWORD:-codellabpassword}@postgres:5432/${POSTGRES_DB:-codellab}
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-supersecretdevelopmentkey}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - codellab_network
+
+volumes:
+  postgres_data:
+
+networks:
+  codellab_network:
+    driver: bridge
