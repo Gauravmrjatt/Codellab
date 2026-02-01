@@ -1,6 +1,7 @@
 FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV NEXT_TELEMETRY_DISABLED 1
 RUN corepack enable
 RUN apk add --no-cache libc6-compat openssl
 
@@ -14,14 +15,18 @@ RUN pnpm install --frozen-lockfile
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy Prisma schema and generate client first to leverage caching
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copy the rest of the application
 COPY . .
 
-# Generate Prisma Client
+# Generate Prisma Client (Legacy location removed, keeping execution dir setup)
 # Note: We need the schema to generate the client
 RUN mkdir -p /tmp/codellab-execution \
     && chmod -R 777 /tmp/codellab-execution
-
-RUN npx prisma generate
 
 # Build Next.js
 RUN pnpm build

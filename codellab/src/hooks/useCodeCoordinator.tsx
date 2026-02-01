@@ -493,6 +493,7 @@ export function useCodeCoordinator({
     participants,
     cursors,
     editingUsers,
+    defaultCode,
     handleEditorChange,
     handleRun,
     handleLanguageChange,
