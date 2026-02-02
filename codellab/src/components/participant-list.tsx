@@ -307,57 +307,58 @@ export function ParticipantList({ participants: propParticipants }: ParticipantL
                         </div>
                       </div>
 
-                      {/* Right-side Actions (Settings) */}
-                      {isCurrentUserAdmin && participant.role !== "admin" && (
-                        <div
-                          className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()} // prevent accordion toggle
-                        >
-                          <DropdownMenu
-                            open={adminControlsOpen === participant.id}
-                            onOpenChange={(open) =>
-                              setAdminControlsOpen(open ? participant.id : null)
-                            }
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 hover:bg-background rounded-full"
-                              >
-                                <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                              </Button>
-                            </DropdownMenuTrigger>
-
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleRoleChange(participant.id, "writer")
-                                }
-                                className={
-                                  participant.role === "writer" ? "bg-accent" : ""
-                                }
-                              >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Writer
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleRoleChange(participant.id, "reader")
-                                }
-                                className={
-                                  participant.role === "reader" ? "bg-accent" : ""
-                                }
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                Reader
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      )}
                     </AccordionTrigger>
+
+                    {/* Right-side Actions (Settings) */}
+                    {isCurrentUserAdmin && participant.role !== "admin" && (
+                      <div
+                        className="absolute right-8 top-3.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenu
+                          open={adminControlsOpen === participant.id}
+                          onOpenChange={(open) =>
+                            setAdminControlsOpen(open ? participant.id : null)
+                          }
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-background rounded-full"
+                            >
+                              <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleRoleChange(participant.id, "writer")
+                              }
+                              className={
+                                participant.role === "writer" ? "bg-accent" : ""
+                              }
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Writer
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleRoleChange(participant.id, "reader")
+                              }
+                              className={
+                                participant.role === "reader" ? "bg-accent" : ""
+                              }
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Reader
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
 
                     {/* ================= PERMISSIONS (EXPANDED) ================= */}
                     {isCurrentUserAdmin && participant.role !== "admin" && (

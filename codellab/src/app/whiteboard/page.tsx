@@ -1,6 +1,6 @@
 'use client'
 
-import { Tldraw } from 'tldraw'
+import { Excalidraw } from "@excalidraw/excalidraw"
 
 export default function WhiteboardPage() {
   return (
@@ -13,7 +13,7 @@ export default function WhiteboardPage() {
         background: '#1e1e1e',
       }}
     >
-      <Tldraw />
+      <Excalidraw theme="dark" />
     </div>
   )
 }

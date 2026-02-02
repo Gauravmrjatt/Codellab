@@ -1,9 +1,21 @@
 "use client"
-import { useEffect, useState, useRef, Component, ReactNode } from "react"
-import { Tldraw, Editor, TLUiOverrides } from "tldraw"
+import { useEffect, useState, useRef, Component, ReactNode, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { useTheme } from "next-themes"
 import { useWS } from "@/context/WebSocketProvider"
 import * as Y from "yjs"
+
+const Excalidraw = dynamic(
+  () => import("@excalidraw/excalidraw").then((mod) => mod.Excalidraw),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-muted/50 text-muted-foreground">
+        Loading Whiteboard...
+      </div>
+    ),
+  }
+)
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -40,41 +52,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-const overrides: TLUiOverrides = {
-  actions: (_editor, actions) => {
-    const modified = { ...actions };
-
-    // remove actions bound to single keys
-    Object.keys(modified).forEach((id) => {
-      const action = modified[id];
-      if (action.kbd && /^[a-z0-9]$/i.test(action.kbd)) { 
-        // simple regex matches single characters like "1", "s", "h"
-        modified[id] = { ...action, kbd: undefined };
-      }
-    });
-
-    return modified;
-  },
-
-  tools: (_editor, tools) => {
-    const modified = { ...tools };
-
-    // remove single-key tool shortcuts
-    Object.keys(modified).forEach((id) => {
-      const tool = modified[id];
-      if (tool.kbd && /^[a-z0-9]$/i.test(tool.kbd)) {
-        modified[id] = { ...tool, kbd: undefined };
-      }
-    });
-
-    return modified;
-  },
-};
-
-
 export function Whiteboard() {
     const { theme } = useTheme()
-    const [editor, setEditor] = useState<Editor | null>(null)
+    const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null)
     const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
     const { socket, requestDrawingSnapshot, participants, userId, roomId } = useWS()
 
@@ -82,7 +62,7 @@ export function Whiteboard() {
     const yDocRef = useRef<Y.Doc | null>(null)
     const yStoreRef = useRef<Y.Map<any> | null>(null)
     const isSyncingRef = useRef(false)
-    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const elementVersionsRef = useRef<Map<string, number>>(new Map())
 
     // Check if current user has drawing permission
     const currentUser = participants.find(p => p.id === userId);
@@ -91,7 +71,7 @@ export function Whiteboard() {
     // Initialize Yjs document once
     if (!yDocRef.current) {
         yDocRef.current = new Y.Doc()
-        yStoreRef.current = yDocRef.current.getMap('tldraw')
+        yStoreRef.current = yDocRef.current.getMap('excalidraw')
     }
 
     const yDoc = yDocRef.current
@@ -126,12 +106,12 @@ export function Whiteboard() {
             }
         }
 
-        // Handle save confirmation (Server sends this after debounced save)
+        // Handle save confirmation
         const handleSaveConfirmation = () => {
             setSaveStatus('saved')
         }
 
-        // 1. Collect updates in a buffer instead of sending immediately
+        // 1. Collect updates in a buffer
         const updateHandler = (update: Uint8Array, origin: any) => {
             if (origin === 'remote') return
             if (!canDraw) return
@@ -140,21 +120,19 @@ export function Whiteboard() {
             setSaveStatus('unsaved')
         }
 
-        // 2. Flush loop: Merge and send updates every 50ms (20fps)
-        // This drastically reduces network overhead and transaction count
+        // 2. Flush loop: Merge and send updates every 50ms
         const flushInterval = setInterval(() => {
             if (pendingUpdatesRef.current.length === 0) return
 
             const updates = pendingUpdatesRef.current
             pendingUpdatesRef.current = [] // Clear buffer
 
-            // Merge all pending updates into a single binary payload
+            // Merge all pending updates
             const mergedUpdate = Y.mergeUpdates(updates)
             
             // Send as raw binary
             socket.emit('drawing:yjs-update', { roomId, update: mergedUpdate })
             
-            // Optimistic "Saving..." state (Server will confirm with 'drawing:saved')
             setSaveStatus('saving')
         }, 50)
 
@@ -182,8 +160,6 @@ export function Whiteboard() {
 
             try {
                 let state: Uint8Array | undefined;
-
-                // Handle wrapped state object or direct state
                 const rawState = snapshot.state || snapshot;
 
                 if (rawState instanceof Uint8Array) {
@@ -191,7 +167,6 @@ export function Whiteboard() {
                 } else if (rawState instanceof ArrayBuffer) {
                     state = new Uint8Array(rawState);
                 } else if (rawState?.type === 'Buffer' && Array.isArray(rawState.data)) {
-                    // Node.js Buffer serialization fallback
                     state = new Uint8Array(rawState.data);
                 } else if (Array.isArray(rawState)) {
                     state = new Uint8Array(rawState);
@@ -206,40 +181,33 @@ export function Whiteboard() {
         }
 
         socket.on('drawing:snapshot', handleSnapshot)
-
         return () => {
             socket.off('drawing:snapshot', handleSnapshot)
         }
     }, [socket, yDoc])
 
-    // Sync between Tldraw and Yjs
+    // Sync between Excalidraw and Yjs
     useEffect(() => {
-        if (!editor || !yStore || !yDoc) return
+        if (!excalidrawAPI || !yStore || !yDoc) return
 
-        // Sync from Yjs to Tldraw
+        // Sync from Yjs to Excalidraw
         const observer = (event: Y.YMapEvent<any>) => {
             if (isSyncingRef.current) return
 
             isSyncingRef.current = true
             try {
-                editor.store.mergeRemoteChanges(() => {
-                    const toRemove: string[] = []
-                    const toPut: any[] = []
+                // Get all elements from Yjs
+                // Efficiently only get what we need? Excalidraw needs full scene usually or updates.
+                // We can construct the scene from yStore values.
+                const elements = Array.from(yStore.values()) as any[]
+                
+                // Update local version cache so we don't echo back
+                elements.forEach(el => {
+                    elementVersionsRef.current.set(el.id, el.version)
+                })
 
-                    event.keysChanged.forEach(key => {
-                        if (yStore.has(key)) {
-                            toPut.push(yStore.get(key))
-                        } else {
-                            toRemove.push(key)
-                        }
-                    })
-
-                    if (toRemove.length > 0) {
-                        editor.store.remove(toRemove as any)
-                    }
-                    if (toPut.length > 0) {
-                        editor.store.put(toPut)
-                    }
+                excalidrawAPI.updateScene({
+                    elements
                 })
             } finally {
                 isSyncingRef.current = false
@@ -248,64 +216,53 @@ export function Whiteboard() {
 
         yStore.observe(observer)
 
-        // Sync from Tldraw to Yjs
-        const unsubscribe = editor.store.listen((entry) => {
-            if (entry.source !== 'user') return
-            if (isSyncingRef.current) return
-
-            // Only allow users with drawing permission to sync changes
-            if (!canDraw) return
-
-            isSyncingRef.current = true
-
-            try {
-                const { changes } = entry
-
-                yDoc.transact(() => {
-                    Object.values(changes.added).forEach(record => {
-                        yStore.set(record.id, record)
-                    })
-
-                    Object.values(changes.updated).forEach(([_, record]) => {
-                        yStore.set(record.id, record)
-                    })
-
-                    Object.values(changes.removed).forEach(record => {
-                        yStore.delete(record.id)
-                    })
-                }, 'local')
-            } finally {
-                isSyncingRef.current = false
-            }
-        }, { scope: 'document', source: 'user' })
+        // Initial load from Yjs if it has data
+        if (yStore.size > 0) {
+             const elements = Array.from(yStore.values()) as any[]
+             elements.forEach(el => {
+                elementVersionsRef.current.set(el.id, el.version)
+             })
+             excalidrawAPI.updateScene({ elements })
+        }
 
         return () => {
             yStore.unobserve(observer)
-            unsubscribe()
         }
-    }, [editor, yStore, yDoc, canDraw])
+    }, [excalidrawAPI, yStore, yDoc])
 
-    // Update theme
-    useEffect(() => {
-        if (editor && theme) {
-            editor.user.updateUserPreferences({
-                colorScheme: theme as "dark" | "light" | "system" | undefined,
-            })
-        }
-    }, [editor, theme])
+    const handleChange = useCallback((elements: readonly any[], appState: any, files: any) => {
+        if (!excalidrawAPI || !yStore || !yDoc || isSyncingRef.current) return
+        if (!canDraw) return
 
-    // Update read-only state
-    useEffect(() => {
-        if (editor) {
-            editor.updateInstanceState({ isReadonly: !canDraw })
+        // Sync from Excalidraw to Yjs
+        // We need to find what changed.
+        // We use elementVersionsRef to track known versions.
+        
+        isSyncingRef.current = true
+        try {
+            yDoc.transact(() => {
+                elements.forEach(element => {
+                    const lastVersion = elementVersionsRef.current.get(element.id) || -1
+                    if (element.version > lastVersion) {
+                        yStore.set(element.id, element)
+                        elementVersionsRef.current.set(element.id, element.version)
+                    }
+                })
+
+                // Handle deletions? 
+                // Excalidraw keeps deleted elements with isDeleted: true. 
+                // We should sync them too so others know they are deleted.
+            }, 'local')
+        } finally {
+            isSyncingRef.current = false
         }
-    }, [editor, canDraw])
+    }, [excalidrawAPI, yStore, yDoc, canDraw])
 
     return (
         <ErrorBoundary>
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                 {/* Status Overlay */}
-                <div className="absolute top-2 right-2 z-[1000] flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm p-1.5 rounded-lg border border-black/5 dark:border-white/5 shadow-sm text-xs font-medium">
+                <div className="absolute top-50 right-2 z-[1000] flex items-center gap-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm p-1.5 rounded-lg border border-black/5 dark:border-white/5 shadow-sm text-xs font-medium">
                     {/* Save Status */}
                     <span className={`px-2 py-0.5 rounded-md ${saveStatus === 'saved' ? 'text-green-600 bg-green-500/10' :
                         saveStatus === 'saving' ? 'text-amber-600 bg-amber-500/10' :
@@ -315,7 +272,7 @@ export function Whiteboard() {
                             saveStatus === 'saving' ? 'Saving...' : 'Unsaved'}
                     </span>
 
-                    {/* Online Users - Presence */}
+                    {/* Online Users */}
                     <div className="flex items-center gap-1 pl-2 border-l border-black/10 dark:border-white/10">
                         <div className="flex -space-x-1.5">
                             {participants.slice(0, 3).map((p, i) => (
@@ -347,16 +304,12 @@ export function Whiteboard() {
                     )}
                 </div>
 
-                <Tldraw
-                    overrides={overrides}
-                    onMount={(editorInstance) => {
-                        setEditor(editorInstance)
-                        editorInstance.user.updateUserPreferences({
-                            colorScheme: theme as "dark" | "light" | "system" | undefined,
-                        })
-                        // Set initial read-only state
-                        editorInstance.updateInstanceState({ isReadonly: !canDraw })
-                    }}
+                <Excalidraw
+                    excalidrawAPI={(api) => setExcalidrawAPI(api)}
+                    theme={theme as "light" | "dark"}
+                    onChange={handleChange}
+                    viewModeEnabled={!canDraw}
+                    gridModeEnabled={true}
                 />
             </div>
         </ErrorBoundary>
