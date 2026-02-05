@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { IndividualEditor } from "@/app/workspace/Individual-Editor"
+import { IndividualEditor } from "@/app/problem/[slug]/Individual-Editor"
 import { notFound, redirect } from "next/navigation"
 
 interface PageProps {

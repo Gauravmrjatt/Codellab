@@ -19,12 +19,12 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 type Mode = 'stopwatch' | 'timer'
 
 const DEFAULT_MINUTES = 25
 
-export function TimerPopover() {
+export function TimerPopover({ individual = false }: { individual?: boolean }) {
   const [mode, setMode] = useState<Mode>('timer')
   const [seconds, setSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
@@ -76,7 +76,7 @@ export function TimerPopover() {
           <Button
             variant="secondary"
             size="icon"
-            className="rounded-r-none p-2.5 bg-(--group-color) cursor-pointer"
+            className={`${individual ? "" : "rounded-r-none"}  p-2.5 bg-(--group-color) cursor-pointer`}
             title="Open timer / stopwatch"
           >
             {isTimer ? (
@@ -249,7 +249,7 @@ export function TimerPopover() {
               <Label htmlFor="minutes" className="text-sm font-medium">
                 Duration (minutes)
               </Label>
-              <div style={{justifyContent : "center"}} className="flex items-center gap-2 w-full">
+              <div style={{ justifyContent: "center" }} className="flex items-center gap-2 w-full">
                 <Button variant="outline" size="icon" className="h-9 w-9 w-full" onClick={() => setTimerMinutes(v => Math.max(1, v - 5))} disabled={timerMinutes <= 5}>
                   <ChevronDown className="h-4 w-4" />
                 </Button>

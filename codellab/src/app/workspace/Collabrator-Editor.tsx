@@ -293,7 +293,7 @@ export function CollaborativeEditor({
                       minimumHeight: 100,
                       minimumWidth: 300,
                       initialWidth: 400,
-                      position: { referencePanel: "files", direction: "right" },
+                      position: { referencePanel: "files", direction: "within" },
                       params: {
                         roomId,
                         questionId,
@@ -309,9 +309,7 @@ export function CollaborativeEditor({
                       component: "test-cases",
                       title: "Test Cases",
                       minimumHeight: 45,
-                      minimumWidth: 300,
-                      initialWidth: 400,
-                      position: { referencePanel: "problem-description", direction: "below" },
+                      position: { referencePanel: "output", direction: "within" },
                       params: {
                         roomId,
                         questionId,
@@ -434,10 +432,9 @@ export function CollaborativeEditor({
                     id: "test-cases",
                     component: "test-cases",
                     title: "Test Cases",
-                    minimumHeight: 150,
                     minimumWidth: 300,
                     initialWidth: 900,
-                    initialHeight: 300,
+                    minimumHeight : 45,
                     position: { referencePanel: "output", direction: "within", index: 0 },
                     params: {
                       roomId,

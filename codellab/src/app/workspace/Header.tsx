@@ -28,6 +28,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useState , useEffect } from 'react'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
@@ -70,6 +71,10 @@ export const iconMicro: Variants = {
 import { useEditorSettingStore } from "@/stores/editor-settings-store";
 import { useTheme } from "next-themes"
 export default function Header({ roomId, roomName, questionId, inviteCode, isPublic }: { roomId: string; roomName: string; questionId?: string; inviteCode?: string; isPublic?: boolean }) {
+  const [url, setUrl] = useState('')
+  useEffect(() => {
+    setUrl(window.location.href)
+  }, [])
   const { dockviewTheme } = useEditorSettingStore()
   const { theme: appTheme, systemTheme } = useTheme()
   const resolvedDockviewTheme = dockviewTheme === 'system'
@@ -339,13 +344,13 @@ export default function Header({ roomId, roomName, questionId, inviteCode, isPub
                         </Label>
                         <Input
                           id="link"
-                          defaultValue={inviteCode}
+                          defaultValue={url}
                           readOnly
                           className="h-9"
                         />
                       </div>
                       <Button type="submit" size="sm" className="px-3" onClick={() => {
-                        navigator.clipboard.writeText(inviteCode)
+                        navigator.clipboard.writeText(url)
                         toast.success("Copied!")
                       }}>
                         <span className="sr-only">Copy</span>

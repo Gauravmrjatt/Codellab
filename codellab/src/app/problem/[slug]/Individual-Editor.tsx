@@ -15,18 +15,18 @@ import "@/app/leetcode-dockview.css"
 import { WebSocketProvider } from "@/context/WebSocketProvider"
 import { useDockRefStore } from "@/stores/dock-ref-store";
 import { useEditorSettingStore } from "@/stores/editor-settings-store";
-import { EditorPanel } from "./EditorPanel";
-import { OutputPanel } from "./OutputPanel";
-import { ConsolePanel } from "./ConsolePanel";
-import IndividualHeader from "./IndividualHeader";
+import { EditorPanel } from "@/app/workspace/EditorPanel";
+import { OutputPanel } from "@/app/workspace/OutputPanel";
+import { ConsolePanel } from "@/app/workspace/ConsolePanel";
+import IndividualHeader from "@/app/problem/[slug]/IndividualHeader";
 import { CustomTab } from "@/components/custom-tabs";
-import { ProblemDescriptionPanel } from './ProblemDescriptionPanel';
-import { TestCasesPanel } from './TestCasesPanel';
-import { SubmissionResultPanel } from "./SubmissionResultPanel"
+import { ProblemDescriptionPanel } from '@/app/workspace/ProblemDescriptionPanel';
+import { TestCasesPanel } from '@/app/workspace/TestCasesPanel';
+import { SubmissionResultPanel } from "@/app/workspace/SubmissionResultPanel"
 import { useCodeEditorStore } from "@/stores/code-editor-store";
-import { LeaderboardPanel } from "./LeaderboardPanel";
-import { SubmissionHistory } from "@/components/submission-history";
-
+import { LeaderboardPanel } from "@/app/workspace/LeaderboardPanel";
+import { Whiteboard } from "@/components/drawing/index"
+import { BlockNoteEditor } from '@/components/block-note-editor'
 interface Participant {
   id: string
   username: string
@@ -45,9 +45,9 @@ interface IndividualEditorProps {
   currentUserId: string
   currentUsername: string
   userRooms?: {
-      id: string
-      name: string
-      updatedAt: string
+    id: string
+    name: string
+    updatedAt: string
   }[];
   contestId?: string
   contest?: any
@@ -100,7 +100,7 @@ function SidebarPanel({ params }: any) {
     contest,
     questionId
   } = params || {}
-  
+
   if (type === "files") {
     return (
       <Card className="h-full bg-transparent border-0 flex flex-col">
@@ -173,33 +173,31 @@ function SidebarPanel({ params }: any) {
       </Card>
     )
   }
-
+  if (type === "note") {
+    return (
+      <BlockNoteEditor
+      />
+    )
+  }
   if (type === "leaderboard") {
     return (
-      <LeaderboardPanel 
-        leaderboard={contest?.leaderboard || []} 
-        currentUsername={currentUsername} 
+      <LeaderboardPanel
+        leaderboard={contest?.leaderboard || []}
+        currentUsername={currentUsername}
       />
     )
   }
 
-  if (type === "submission-history") {
-    return (
-      <Card className="h-full bg-transparent border-0 flex flex-col">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">My Submissions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 p-0 overflow-hidden">
-           <SubmissionHistory questionId={questionId} />
-        </CardContent>
-      </Card>
-    )
+  if (type === "notes") {
+    
   }
-
+  if (type === "whiteboard") {
+    return (<Whiteboard />)
+  }
   if (type === "submission") {
     return (<SubmissionResultPanel {...params} />)
   }
-  return <>this is null</>
+  return <></>
 }
 
 /* ---------------- Main Component ---------------- */
@@ -255,22 +253,22 @@ export function IndividualEditor({
 
   const handleCreateFile = async (name: string) => {
     try {
-        const res = await fetch(`/api/rooms/${roomId}/files`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        })
-    
-        if (res.ok) {
-            const newFile = await res.json()
-            setFiles(prev => [...prev, newFile])
-            setActiveFile(newFile.name)
-            return
-        }
+      const res = await fetch(`/api/rooms/${roomId}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      })
+
+      if (res.ok) {
+        const newFile = await res.json()
+        setFiles(prev => [...prev, newFile])
+        setActiveFile(newFile.name)
+        return
+      }
     } catch (e) {
-        // Fallback for individual mode without backend room
+      // Fallback for individual mode without backend room
     }
-    
+
     // Fallback: Add locally
     const newFile = { name, language: "javascript", content: "" }
     setFiles(prev => [...prev, newFile])
@@ -291,13 +289,13 @@ export function IndividualEditor({
       mock={true} // Enable mock mode for individual editor
     >
       <div className="h-screen flex flex-col overflow-hidden">
-        <IndividualHeader 
-            roomId={roomId} 
-            roomName={contest ? contest.title : roomName} 
-            questionId={questionId} 
-            userRooms={userRooms} 
-            contestId={contestId}
-            contest={contest}
+        <IndividualHeader
+          roomId={roomId}
+          roomName={contest ? contest.title : roomName}
+          questionId={questionId}
+          userRooms={userRooms}
+          contestId={contestId}
+          contest={contest}
         />
         <div className="flex-1 overflow-hidden">
           <DockviewReact
@@ -341,10 +339,10 @@ export function IndividualEditor({
 
                 // Filter panels according to mode
                 if (contestId) {
-                    api.getPanel('files')?.api.close();
+                  api.getPanel('files')?.api.close();
                 } else {
-                    api.getPanel('contest-problems')?.api.close();
-                    api.getPanel('leaderboard')?.api.close();
+                  api.getPanel('contest-problems')?.api.close();
+                  api.getPanel('leaderboard')?.api.close();
                 }
 
                 // Ensure essential panels exist
@@ -370,70 +368,69 @@ export function IndividualEditor({
                       title: "Test Cases",
                       minimumHeight: 45,
                       minimumWidth: 300,
-                      initialWidth: 400,
                       position: { referencePanel: "problem-description", direction: "below" },
                       params: { roomId, questionId },
                     });
                   }
                 }
-                
+
                 if (contest && !api.getPanel('contest-problems')) {
-                    api.addPanel({
-                        tabComponent: "default",
-                        id: "contest-problems",
-                        component: "sidebar",
-                        title: "Problems",
-                        minimumWidth: 45,
-                        initialWidth: 45,
-                        position: { referencePanel: "problem-description", direction: "within", index: 0 },
-                        params: {
-                            type: "contest-problems",
-                            contest,
-                            questionId
-                        }
-                    })
+                  api.addPanel({
+                    tabComponent: "default",
+                    id: "contest-problems",
+                    component: "sidebar",
+                    title: "Problems",
+                    minimumWidth: 45,
+                    initialWidth: 45,
+                    position: { referencePanel: "problem-description", direction: "within", index: 0 },
+                    params: {
+                      type: "contest-problems",
+                      contest,
+                      questionId
+                    }
+                  })
                 }
               } else {
                 // Default Layout Logic
-                
+
                 // 1. Files (Individual) or Problems (Contest)
                 if (!contestId) {
-                    api.addPanel({
-                        tabComponent: "default",
-                        id: "files",
-                        component: "sidebar",
-                        title: "files",
-                        minimumHeight: 45,
-                        initialHeight: 45,
-                        initialWidth: 45,
-                        minimumWidth: 45,
-                        params: {
-                            type: "files",
-                            files,
-                            activeFile,
-                            setActiveFile,
-                            handleCreateFile,
-                        },
-                    })
+                  api.addPanel({
+                    tabComponent: "default",
+                    id: "files",
+                    component: "sidebar",
+                    title: "files",
+                    minimumHeight: 45,
+                    initialHeight: 45,
+                    initialWidth: 45,
+                    minimumWidth: 45,
+                    params: {
+                      type: "files",
+                      files,
+                      activeFile,
+                      setActiveFile,
+                      handleCreateFile,
+                    },
+                  })
                 } else {
-                    api.addPanel({
-                        tabComponent: "default",
-                        id: "contest-problems",
-                        component: "sidebar",
-                        title: "Problems",
-                        minimumWidth: 45,
-                        initialWidth: 45,
-                        params: {
-                            type: "contest-problems",
-                            contest,
-                            questionId
-                        }
-                    })
+                  api.addPanel({
+                    tabComponent: "default",
+                    id: "contest-problems",
+                    component: "sidebar",
+                    title: "Problems",
+                    minimumWidth: 45,
+                    initialWidth: 45,
+                    params: {
+                      type: "contest-problems",
+                      contest,
+                      questionId
+                    }
+                  })
                 }
 
                 // Add problem description panel if questionId is present
                 if (questionId) {
-                    api.addPanel({
+                  api.addPanel({
                     tabComponent: "default",
                     id: "problem-description",
                     component: "problem-description",
@@ -441,72 +438,69 @@ export function IndividualEditor({
                     minimumHeight: 100,
                     minimumWidth: 300,
                     initialWidth: 400,
-                    position: { referencePanel: contestId ? "contest-problems" : "files", direction: "within" , index : 0 },
+                    position: { referencePanel: contestId ? "contest-problems" : "files", direction: "within", index: 0 },
                     params: {
-                        roomId,
-                        questionId,
+                      roomId,
+                      questionId,
                     },
-                    });
+                  });
                 }
 
                 api.addPanel({
-                    tabComponent: "default",
-                    id: "editor",
-                    component: "editor",
-                    title: "Code",
-                    minimumHeight: 45,
-                    initialHeight: 45,
-                    minimumWidth: 500,
-                    initialWidth: questionId ? 800 : 1250, 
-                    position: {
+                  tabComponent: "default",
+                  id: "editor",
+                  component: "editor",
+                  title: "Code",
+                  minimumHeight: 45,
+                  initialHeight: 45,
+                  minimumWidth: 500,
+                  initialWidth: questionId ? 800 : 1250,
+                  position: {
                     referencePanel: questionId ? "problem-description" : (contestId ? "contest-problems" : "files"),
-                    direction:  "right",
-                    },
-                    params: {
+                    direction: "right",
+                  },
+                  params: {
                     type: "editor",
                     roomId: roomId,
                     currentUserId,
                     currentUsername,
                     questionId,
-                    },
+                  },
                 })
 
                 api.addPanel({
-                    tabComponent: "default",
-                    id: "output",
-                    component: "output",
-                    title: "Output",
-                    minimumHeight: 45,
-                    initialHeight: 45,
-                    position: {
+                  tabComponent: "default",
+                  id: "output",
+                  component: "output",
+                  title: "Output",
+                  minimumHeight: 45,
+                  initialHeight: 45,
+                  position: {
                     referencePanel: "editor",
                     direction: "below"
-                    },
-                    params: {
+                  },
+                  params: {
                     type: "output",
-                    },
+                  },
                 })
 
                 // Add test cases panel if questionId is present
                 if (questionId) {
-                    api.addPanel({
+                  api.addPanel({
                     tabComponent: "default",
                     id: "test-cases",
                     component: "test-cases",
                     title: "Test Cases",
-                    minimumHeight: 150,
-                    minimumWidth: 300,
-                    initialWidth: 900,
-                    initialHeight: 300,
-                    position: { referencePanel: "output", direction: "within",  index : 0 },
+                    minimumHeight: 45,
+                    position: { referencePanel: "output", direction: "within", index: 0 },
                     params: {
-                        roomId,
-                        questionId,
+                      roomId,
+                      questionId,
                     },
-                    });
+                  });
 
-                    // Add console panel as a separate tab within the test cases area
-                    api.addPanel({
+                  // Add console panel as a separate tab within the test cases area
+                  api.addPanel({
                     tabComponent: "default",
                     id: "console",
                     component: "console",
@@ -515,26 +509,27 @@ export function IndividualEditor({
                     initialHeight: 45,
                     position: { referencePanel: "test-cases", direction: "within" },
                     params: {
-                        type: "console",
+                      type: "console",
                     },
                     inactive: true,
-                });
-              } else {
-                api.addPanel({
-                  tabComponent: "default",
-                  id: "console",
-                  component: "console",
-                  title: "Console",
-                  minimumHeight: 45,
-                  initialHeight: 45,
-                  position: { referencePanel: "output", direction: "within" },
-                  params: {
-                    type: "console",
-                  },
-                  inactive: true,
-                });
+                  });
+                } else {
+                  api.addPanel({
+                    tabComponent: "default",
+                    id: "console",
+                    component: "console",
+                    title: "Console",
+                    minimumHeight: 45,
+                    initialHeight: 45,
+                    position: { referencePanel: "output", direction: "within" },
+                    params: {
+                      type: "console",
+                    },
+                    inactive: true,
+                  });
+                }
               }
-              }
+              api.getPanel('files')?.api.close();
               api.onDidLayoutChange(() => {
                 saveLayout(api)
               })

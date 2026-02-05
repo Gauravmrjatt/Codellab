@@ -155,7 +155,7 @@ export default async function DashboardProblemsPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="sm" className="hover:text-[#edae00] hover:bg-[#edae00]/10" asChild>
-                                                        <Link href={`/editor?questionId=${sub.questionId}`}>
+                                                           <Link href={`/problem/${sub.question.slug}?questionId=${sub.id}`}>
                                                             Solve Again
                                                             <ArrowUpRight className="ml-2 h-4 w-4" />
                                                         </Link>
@@ -227,7 +227,7 @@ export default async function DashboardProblemsPage() {
                                                             </Link>
                                                         </Button>
                                                         <Button variant="ghost" size="sm" className="hover:text-[#edae00] hover:bg-[#edae00]/10" asChild>
-                                                            <Link href={`/editor?questionId=${problem.id}`}>
+                                                            <Link href={`/problem/${problem.slug}?questionId=${problem.id}`}>
                                                                 View
                                                                 <ArrowUpRight className="ml-2 h-4 w-4" />
                                                             </Link>

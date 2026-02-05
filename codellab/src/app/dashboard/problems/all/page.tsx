@@ -139,7 +139,7 @@ export default async function AllProblemsPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="sm" asChild>
-                                        <Link href={`/editor?questionId=${problem.id}`}>
+                                        <Link href={`/problem/${problem.slug}?questionId=${problem.id}`}>
                                             {problem.submissions.length > 0 ? "Try Again" : "Solve"}
                                             <ArrowUpRight className="ml-2 h-4 w-4" />
                                         </Link>

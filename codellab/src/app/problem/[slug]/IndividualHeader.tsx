@@ -32,15 +32,18 @@ import { TimerPopover } from '@/components/timer/timer-popover'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
+import { FaNoteSticky } from "react-icons/fa6"
+import { FaHistory } from "react-icons/fa"
+import { MdDraw } from "react-icons/md";
+import { CraftButton, CraftButtonIcon, CraftButtonIconProps, CraftButtonLabel, CraftButtonLabelProps, CraftButtonProps } from "@/components/ui/craft-button"
 export const microButton: Variants = {
   hover: {
     scale: 1.04,
@@ -72,16 +75,16 @@ export const iconMicro: Variants = {
 }
 
 interface IndividualHeaderProps {
-    roomId: string;
-    roomName: string;
-    questionId?: string;
-    userRooms?: {
-        id: string
-        name: string
-        updatedAt: string
-    }[];
-    contestId?: string;
-    contest?: any;
+  roomId: string;
+  roomName: string;
+  questionId?: string;
+  userRooms?: {
+    id: string
+    name: string
+    updatedAt: string
+  }[];
+  contestId?: string;
+  contest?: any;
 }
 
 export default function IndividualHeader({ roomId, roomName, questionId, userRooms = [], contestId, contest }: IndividualHeaderProps) {
@@ -91,7 +94,7 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false)
   const [roomSearchQuery, setRoomSearchQuery] = useState("")
   const { userId, username } = useWS()
-  
+
   const isMac =
     typeof navigator !== "undefined" &&
     /Mac|iPhone|iPad/.test(navigator.platform)
@@ -123,6 +126,56 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
     return colors[Math.abs(hash) % colors.length]
   }
 
+  const handleNotes = () => {
+    const panel = dockview.dockviewRef?.getPanel("note")
+    if (panel) {
+      panel?.api.setActive()
+      if (panel.api.height < 100) { panel.api.setSize({ height: 300 }) }
+    }
+    else {
+      dockview.dockviewRef?.addPanel({
+        tabComponent: "default",
+        id: "note",
+        component: "sidebar",
+        title: "Notes",
+        minimumHeight: 45,
+        initialWidth: 45,
+        minimumWidth: 500,
+        initialHeight: 500,
+        position: { referencePanel: "problem-description", direction: "within" },
+        params: {
+          type: "note",
+          roomId,
+          currentUserId: userId,
+          currentUsername: username,
+          userColor: getUserColor(userId || ""),
+        }
+      });
+    }
+  }
+  const handleWhiteboard = () => {
+    const panel = dockview.dockviewRef?.getPanel("whiteboard")
+    if (panel) {
+      panel?.api.setActive()
+      if (panel.api.height < 100) { panel.api.setSize({ height: 300 }) }
+    }
+    else {
+      dockview.dockviewRef?.addPanel({
+        tabComponent: "default",
+        id: "whiteboard",
+        component: "sidebar",
+        title: "Whiteboard",
+        minimumHeight: 45,
+        initialWidth: 45,
+        minimumWidth: 500,
+        initialHeight: 500,
+        position: { referencePanel: "problem-description", direction: "within" },
+        params: {
+          type: "whiteboard"
+        }
+      });
+    }
+  }
   const handleRoomSelect = (selectedRoomId: string) => {
     router.push(`/workspace?questionId=${questionId}&room=${selectedRoomId}`)
   }
@@ -153,24 +206,7 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
     }
   }
 
-  const handleFiles = () => {
-    const panel = dockview.dockviewRef?.getPanel("files")
-    if (panel) {
-      panel.api.setActive()
-    } else {
-      dockview.dockviewRef?.addPanel({
-        tabComponent: "default",
-        id: "files",
-        component: "sidebar",
-        title: "Files",
-        minimumWidth: 300,
-        position: { referencePanel: "problem-description", direction: "within", index: 0 },
-        params: {
-          type: "files"
-        }
-      })
-    }
-  }
+
 
   const handleLeaderboard = () => {
     const panel = dockview.dockviewRef?.getPanel("leaderboard")
@@ -194,26 +230,31 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
   }
 
   const handleSubmissions = () => {
-    const panel = dockview.dockviewRef?.getPanel("submission-history")
+    const panel = dockview.dockviewRef?.getPanel("submission")
     if (panel) {
       panel.api.setActive()
+      panel.api.updateParameters({
+        type: "submission",
+        forType: "history",
+      });
     } else {
       dockview.dockviewRef?.addPanel({
         tabComponent: "default",
-        id: "submission-history",
+        id: "submission",
         component: "sidebar",
-        title: "Submissions",
+        title: "Submission",
         minimumWidth: 300,
         position: { referencePanel: "problem-description", direction: "within" },
         params: {
-          type: "submission-history",
-          questionId
+          type: "submission",
+          questionId,
+          forType: "history"
         }
       })
     }
   }
 
-  const filteredRooms = userRooms.filter(room => 
+  const filteredRooms = userRooms.filter(room =>
     room.name.toLowerCase().includes(roomSearchQuery.toLowerCase())
   )
 
@@ -231,7 +272,7 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
           </span>
           {contestId && (
             <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">
-                Contest Mode
+              Contest Mode
             </span>
           )}
         </div>
@@ -263,7 +304,7 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
                       className="rounded-r-none border-(--border-color) border-dashed border-r-2 p-2.5 bg-(--group-color)  cursor-pointer"
                     >
                       <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                        <FaPlay  className="h-4.5 text-green-600 dark:text-green-500" />
+                        <FaPlay className="h-4.5 text-green-600 dark:text-green-500" />
                       </motion.div>
                     </Button>
                   </motion.div>
@@ -308,108 +349,145 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
 
           <div className='flex gap-1'>
             {contestId ? (
-                <Tooltip>
+              <Tooltip>
                 <TooltipTrigger asChild>
-                    <motion.div variants={microButton} whileHover="hover" whileTap="tap">
+                  <motion.div variants={microButton} whileHover="hover" whileTap="tap">
                     <Button
-                        onClick={handleProblems}
-                        variant="secondary"
-                        size="icon-lg"
-                        className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
+                      onClick={handleProblems}
+                      variant="secondary"
+                      size="icon-lg"
+                      className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
                     >
-                        <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
+                      <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
                         <Trophy className="h-4.5 text-orange-500" />
-                        </motion.div>
+                      </motion.div>
                     </Button>
-                    </motion.div>
+                  </motion.div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                    Contest Problems
+                  Contest Problems
                 </TooltipContent>
-                </Tooltip>
+              </Tooltip>
             ) : (
+              // <Tooltip>
+              // <TooltipTrigger asChild>
+              //     <motion.div variants={microButton} whileHover="hover" whileTap="tap">
+              //     <Button
+              //         onClick={handleFiles}
+              //         variant="secondary"
+              //         size="icon-lg"
+              //         className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
+              //     >
+              //         <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
+              //         <FileCode className="h-4.5 text-blue-500" />
+              //         </motion.div>
+              //     </Button>
+              //     </motion.div>
+              // </TooltipTrigger>
+              // <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
+              //     Files
+              // </TooltipContent>
+              // </Tooltip>
+              <div className='flex gap-1'>
                 <Tooltip>
-                <TooltipTrigger asChild>
+                  <TooltipTrigger asChild>
                     <motion.div variants={microButton} whileHover="hover" whileTap="tap">
-                    <Button
-                        onClick={handleFiles}
+                      <Button
+                        onClick={handleNotes}
                         variant="secondary"
                         size="icon-lg"
-                        className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
-                    >
+                        className="border border-muted/50 p-2.5 bg-(--group-color)  cursor-pointer"
+                      >
                         <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                        <FileCode className="h-4.5 text-blue-500" />
+                          <FaNoteSticky className="h-4.5 text-[#FFB700] " />
                         </motion.div>
-                    </Button>
+                      </Button>
                     </motion.div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                    Files
-                </TooltipContent>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
+                    Notes
+                  </TooltipContent>
                 </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.div variants={microButton} whileHover="hover" whileTap="tap">
+                      <Button
+                        onClick={handleWhiteboard}
+                        variant="secondary"
+                        size="icon-lg"
+                        className="border border-muted/50 p-2.5 bg-(--group-color)  cursor-pointer"
+                      >
+                        <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
+                          <MdDraw className="h-4 text-[#FD8DA3] " />
+                        </motion.div>
+                      </Button>
+                    </motion.div>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
+                    Whiteboard
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             )}
 
             {contestId && (
-                <Tooltip>
+              <Tooltip>
                 <TooltipTrigger asChild>
-                    <motion.div variants={microButton} whileHover="hover" whileTap="tap">
+                  <motion.div variants={microButton} whileHover="hover" whileTap="tap">
                     <Button
-                        onClick={handleLeaderboard}
-                        variant="secondary"
-                        size="icon-lg"
-                        className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
+                      onClick={handleLeaderboard}
+                      variant="secondary"
+                      size="icon-lg"
+                      className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
                     >
-                        <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
+                      <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
                         <Trophy className="h-4.5 text-yellow-500" />
-                        </motion.div>
+                      </motion.div>
                     </Button>
-                    </motion.div>
+                  </motion.div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                    Leaderboard
+                  Leaderboard
                 </TooltipContent>
-                </Tooltip>
+              </Tooltip>
             )}
 
             {questionId && (
-                <Tooltip>
+              <Tooltip>
                 <TooltipTrigger asChild>
-                    <motion.div variants={microButton} whileHover="hover" whileTap="tap">
+                  <motion.div variants={microButton} whileHover="hover" whileTap="tap">
                     <Button
-                        onClick={handleSubmissions}
-                        variant="secondary"
-                        size="icon-lg"
-                        className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
+                      onClick={handleSubmissions}
+                      variant="secondary"
+                      size="icon-lg"
+                      className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
                     >
-                        <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                        <History className="h-4.5 text-blue-500" />
-                        </motion.div>
+                      <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
+                        <FaHistory className="h-4.5 text-[#615FFF]" />
+                      </motion.div>
                     </Button>
-                    </motion.div>
+                  </motion.div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                    My Submissions
+                  My Submissions
                 </TooltipContent>
-                </Tooltip>
+              </Tooltip>
             )}
           </div>
         </div>
 
         {/* Right */}
         <div className="flex items-center gap-2 md:gap-3">
-            
-          {!contestId && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsRoomDialogOpen(true)}
-                className="hidden sm:flex"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Open in Workspace
-              </Button>
-          )}
 
+         
+           {!contestId && (
+          <Button onClick={() => setIsRoomDialogOpen(true)} className="text-white shadow-md  bg-gradient-to-r from-purple-500/80 via-purple-600 to-purple-700/60 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-base text-sm px-4 py-2 text-center leading-5 rounded-md transition-all">
+           <span className="relative  w-full justify-center items-center flex text-left text-white transition-colors duration-200 ease-in-out group-hover:text-white">
+              <Users className="w-4 h-4 mr-2" />
+              Open in Workspace
+            </span>
+          </Button>
+           )}
           <div className="flex items-center gap-1">
 
             {/* Layout */}
@@ -435,7 +513,7 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
           {/* Timer */}
           <ButtonGroup className="gap-0 hidden sm:flex">
             <motion.div variants={microButton} whileHover="hover" whileTap="tap">
-              <TimerPopover />
+              <TimerPopover individual={true} />
             </motion.div>
           </ButtonGroup>
 
@@ -456,61 +534,61 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
       </div>
 
       <Dialog open={isRoomDialogOpen} onOpenChange={setIsRoomDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Collaborate</DialogTitle>
-                    <DialogDescription>
-                        Join an existing room or create a new one to collaborate on this problem.
-                    </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                    <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search rooms..."
-                                className="pl-9"
-                                value={roomSearchQuery}
-                                onChange={(e) => setRoomSearchQuery(e.target.value)}
-                            />
-                        </div>
-                        <Button onClick={handleCreateRoom}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            New
-                        </Button>
-                    </div>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Collaborate</DialogTitle>
+            <DialogDescription>
+              Join an existing room or create a new one to collaborate on this problem.
+            </DialogDescription>
+          </DialogHeader>
 
-                    <ScrollArea className="h-[300px] rounded-md border p-4">
-                        {filteredRooms.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-sm">
-                                {roomSearchQuery ? "No rooms match your search" : "No rooms found"}
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {filteredRooms.map((room) => (
-                                    <button
-                                        key={room.id}
-                                        onClick={() => handleRoomSelect(room.id)}
-                                        className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
-                                    >
-                                        <div>
-                                            <div className="font-medium">{room.name}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                Last active: {new Date(room.updatedAt).toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                        <div className="text-xs text-primary group-hover:underline">
-                                            Join
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </ScrollArea>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search rooms..."
+                  className="pl-9"
+                  value={roomSearchQuery}
+                  onChange={(e) => setRoomSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleCreateRoom}>
+                <Plus className="h-4 w-4 mr-2" />
+                New
+              </Button>
+            </div>
+
+            <ScrollArea className="h-[300px] rounded-md border p-4">
+              {filteredRooms.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-sm">
+                  {roomSearchQuery ? "No rooms match your search" : "No rooms found"}
                 </div>
-            </DialogContent>
-        </Dialog>
+              ) : (
+                <div className="space-y-2">
+                  {filteredRooms.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => handleRoomSelect(room.id)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div>
+                        <div className="font-medium">{room.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Last active: {new Date(room.updatedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-xs text-primary group-hover:underline">
+                        Join
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }

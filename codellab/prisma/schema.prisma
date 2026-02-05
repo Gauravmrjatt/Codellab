@@ -220,7 +220,6 @@ model Permission {
   canDraw       Boolean @default(true)
   user          User    @relation(fields: [userId], references: [id])
   room          Room    @relation(fields: [roomId], references: [id])
-
   @@unique([roomId, userId])
 }
 

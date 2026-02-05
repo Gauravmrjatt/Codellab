@@ -1,3 +1,4 @@
+
 import { prisma } from "@/lib/prisma"
 import {
     Table,
@@ -9,7 +10,8 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { CheckCircle2, Circle } from "lucide-react"
+import { CheckCircle2, Circle , ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default async function ProblemsPage() {
     const problems = await prisma.question.findMany({
@@ -43,6 +45,14 @@ export default async function ProblemsPage() {
 
     return (
         <div className="container mx-auto py-10 px-4 max-w-7xl mt-10 pt-15">
+            <div className="flex items-center gap-2 mb-2">
+                <Button variant="ghost" size="sm" asChild className="-ml-2 h-8">
+                    <Link href="/">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                    </Link>
+                </Button>
+            </div>
             <div className="flex flex-col gap-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Problems</h1>
@@ -74,7 +84,7 @@ export default async function ProblemsPage() {
                                     </TableCell>
                                     <TableCell>
                                         <Link
-                                            href={`/editor?questionId=${problem.id}`}
+                                            href={`/problem/${problem.slug}?questionId=${problem.id}`}
                                             className="font-medium hover:text-primary transition-colors"
                                         >
                                             {problem.title}

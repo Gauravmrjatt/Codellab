@@ -55,7 +55,7 @@ export function useCodeCoordinator({
   } = useCodeEditorStore()
   const { applyExecutionState } = useExecutionState()
   const { dockviewRef } = useDockRefStore()
-  
+
   const [defaultCode, setDefaultCode] = useState(initialCode || templates[initialLanguage as keyof typeof templates] || templates.javascript)
 
   const {
@@ -435,6 +435,7 @@ export function useCodeCoordinator({
       if (panel) {
         panel.api.updateParameters({
           type: "submission",
+          forType: "submit",
           ...result,
         });
       } else {
@@ -453,6 +454,7 @@ export function useCodeCoordinator({
           },
           params: {
             type: "submission",
+            forType: "submit",
             ...result,
           },
         });

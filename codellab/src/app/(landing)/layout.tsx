@@ -15,11 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <div className="flex flex-col min-h-screen">
-      <LandingNavigation />
+      {/* <LandingNavigation /> */}
       <main className="flex-1">
         {children}
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

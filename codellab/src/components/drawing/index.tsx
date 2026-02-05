@@ -53,7 +53,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 export function Whiteboard() {
-    const { theme } = useTheme()
+    const { resolvedTheme } = useTheme()
     const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null)
     const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
     const { socket, requestDrawingSnapshot, participants, userId, roomId } = useWS()
@@ -306,7 +306,7 @@ export function Whiteboard() {
 
                 <Excalidraw
                     excalidrawAPI={(api) => setExcalidrawAPI(api)}
-                    theme={theme as "light" | "dark"}
+                    theme={resolvedTheme as "light" | "dark"}
                     onChange={handleChange}
                     viewModeEnabled={!canDraw}
                     gridModeEnabled={true}

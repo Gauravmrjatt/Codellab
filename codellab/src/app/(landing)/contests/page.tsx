@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Trophy, Clock, Users, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import {  ArrowLeft } from "lucide-react"
 
 export default async function ContestsPage() {
     const allContests = await prisma.contest.findMany({
@@ -70,6 +71,14 @@ export default async function ContestsPage() {
 
     return (
         <div className="container mx-auto py-10 px-4 max-w-7xl mt-10" >
+            <div className="flex items-center gap-2 mb-2">
+                <Button variant="ghost" size="sm" asChild className="-ml-2 h-8">
+                    <Link href="/">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                    </Link>
+                </Button>
+            </div>
             <div className="flex flex-col gap-10">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Contests</h1>

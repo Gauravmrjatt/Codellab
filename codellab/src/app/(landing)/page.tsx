@@ -1,572 +1,599 @@
-'use client';
-
-import React, { useRef } from 'react';
-import Link from 'next/link';
-import { motion, useScroll, useTransform } from 'framer-motion';
+'use client'
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
-  ArrowRight, Code2, Users, Trophy, Shield, Zap,
-  Terminal, Globe, Cpu, Layers, GitBranch, MessageSquare,
-  CheckCircle, Star, Github, Slack, Figma, Trello,
-  Briefcase, GraduationCap
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+
+} from 'framer-motion';
+import * as THREE from 'three';
+import {
+  Zap, ShieldAlert, Video, Cpu, Globe,
+  ChevronRight, Terminal, Lock, Activity, CheckCircle2,
+  Trophy, Shield, Slack, Figma, Github,
+  Antenna,
+  FolderCode,
+  SquareCode
 } from 'lucide-react';
-import {
-  PencilRuler,
-  StickyNote,
-  Video,
-  Mic,
-  HelpCircle,
-  BarChart3,
-} from "lucide-react";
-import PixelBlast from '@/components/PixelBlast';
-import { LaserFlow } from '@/components/LaserFlow';
-import ParallaxSection from '@/components/ParallaxSection';
-import InteractiveTerminal from '@/components/InteractiveTerminal';
-import RotatingText from '@/components/RotatingText';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-
-// --- COMPONENTS ---
-const stats = [
-  { label: "Whiteboard", val: "< 30ms", icon: PencilRuler },
-  { label: "Notes", val: "24 Regions", icon: StickyNote },
-  { label: "Chats", val: "99.99%", icon: MessageSquare },
-  { label: "Video Call", val: "50k+", icon: Video },
-  { label: "Audio Call", val: "50k+", icon: Mic },
-  { label: "Questions", val: "50k+", icon: HelpCircle },
-  { label: "Contests", val: "50k+", icon: Trophy },
-  { label: "Leaderboard", val: "50k+", icon: BarChart3 },
-];
-
-const SectionHeader = ({ title, subtitle, align = 'center' }: { title: string, subtitle?: string, align?: 'center' | 'left' }) => (
-  <div className={`mb-16 ${align === 'center' ? 'text-center' : 'text-left'}`}>
-    <motion.h2
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-3xl md:text-5xl font-bold tracking-tight mb-6"
-    >
-      {title}
-    </motion.h2>
-    {subtitle && (
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.1 }}
-        className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed"
-      >
-        {subtitle}
-      </motion.p>
-    )}
-  </div>
-);
-
-const FeatureCard = ({ icon: Icon, title, description, delay = 0 }: { icon: any, title: string, description: string, delay?: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay }}
-    className="h-full"
-  >
-    <Card className="h-full bg-white/5 border-white/10 hover:border-[#edae00]/50 transition-all duration-300 hover:bg-white/10 hover:-translate-y-1 relative group overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#edae00]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      <CardHeader>
-        <div className="w-12 h-12 rounded-lg bg-muted/70 border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-[#edae00]">
-          <Icon size={24} />
-        </div>
-        <CardTitle className="text-xl">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <CardDescription className="text-base text-gray-400 leading-relaxed">{description}</CardDescription>
-      </CardContent>
-    </Card>
-  </motion.div>
-);
-
-const StepCard = ({ number, title, description }: { number: string, title: string, description: string }) => (
-  <div className="flex flex-col items-center text-center space-y-4 z-5 bg-transparent">
-    <div className="w-16 h-16 rounded-full bg-[#edae00]/10 border border-[#edae00]/20 flex items-center justify-center text-2xl font-bold text-[#edae00]">
-      {number}
-    </div>
-    <h3 className="text-xl bg-background font-bold pt-0 p-2">{title}</h3>
-    <p className="text-gray-400">{description}</p>
-  </div>
-);
-
-const PricingCard = ({ title, price, features, recommended = false }: { title: string, price: string, features: string[], recommended?: boolean }) => (
-  <Card className={`relative flex flex-col h-full ${recommended ? 'border-[#edae00] bg-[#edae00]/5' : 'border-white/10 bg-white/5'}`}>
-    {recommended && (
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#edae00] text-black text-xs font-bold rounded-full">
-        MOST POPULAR
-      </div>
-    )}
-    <CardHeader className="text-center">
-      <CardTitle className="text-2xl">{title}</CardTitle>
-      <div className="mt-4">
-        <span className="text-4xl font-bold">{price}</span>
-        {price !== 'Free' && <span className="text-muted-foreground">/mo</span>}
-      </div>
-    </CardHeader>
-    <CardContent className="flex-1">
-      <ul className="space-y-3">
-        {features.map((feature, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-            <CheckCircle className={`w-4 h-4 ${recommended ? 'text-[#edae00]' : 'text-gray-500'}`} />
-            {feature}
-          </li>
-        ))}
-      </ul>
-    </CardContent>
-    <CardFooter>
-      <Button className={`w-full ${recommended ? 'bg-[#edae00] text-black hover:bg-[#d49b00]' : 'bg-white/10 hover:bg-white/20'}`}>
-        Get Started
-      </Button>
-    </CardFooter>
-  </Card>
-);
-
-export default function LandingPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
-
-  const heroY = useTransform(scrollYProgress, [0, 0.2], [0, 100]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+import Link from 'next/link'
+// --- Constants ---
+const PRIMARY_HEX = "#edae00";
+const PRIMARY_GLOW = "rgba(237, 174, 0, 0.15)";
+import Grainient from "@/components/Grainient"
+// --- Reusable Motion Components ---
+const FadeIn = ({ children, delay = 0, direction = 'up' }) => {
+  const directions = {
+    up: { y: 20, x: 0 },
+    down: { y: -20, x: 0 },
+    left: { x: 20, y: 0 },
+    right: { x: -20, y: 0 },
+  };
 
   return (
-    <div ref={containerRef} className="relative  min-h-screen overflow-x-hidden selection:bg-[#edae00] selection:text-black font-sans">
+    <motion.div
+      initial={{ opacity: 0, ...directions[direction] }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
-      {/* --- HERO SECTION --- */}
-      <section className="relative  flex items-center justify-center pt-20 lg:pt-0 min-h-dvh">
-        <div className="absolute inset-0 z-0">
-          {/* <PixelBlast 
-            pixelSize={30} 
-            color="#edae00" 
-            variant="square" 
-            patternDensity={0.3} 
-            speed={0.2}
-            className="opacity-20"
-          /> */}
-        </div>
+// --- Background Component (Three.js) ---
+const ThreeBackground = () => {
+  const containerRef = useRef();
 
-        <div className="absolute inset-0  z-0 pointer-events-none" />
+  useEffect(() => {
+    let scene, camera, renderer, particles;
+    const container = containerRef.current;
 
-        <motion.div
-          style={{ y: heroY, opacity: heroOpacity }}
-          className="container relative z-10 px-4 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
-        >
-          <div className="space-y-8 text-center lg:text-left order-2 lg:order-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="inline-flex items-center gap-2 border border-[#edae00]/30 bg-[#edae00]/5 px-3 py-1 rounded-full text-xs font-medium text-[#edae00] mb-6">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#edae00] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#edae00]"></span>
-                </span>
-                v2.0 is Live
-              </div>
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight mb-6 relative overflow-hidden">
-                Code Together.<br />
-                <RotatingText
-                  texts={['Build Faster.', 'Ship Better.', 'Scale Up.']}
-                  mainClassName="text-[#edae00]"
-                  staggerFrom="last"
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "-120%" }}
-                  transition={{ type: "spring", damping: 20 }}
-                  rotationInterval={3000}
-                />
-              </h1>
-              <p className="text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                The ultimate collaborative workspace for engineering teams. Real-time editing, secure sandboxes, and integrated communication.
-              </p>
-            </motion.div>
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <Link href="/dashboard">
-                <Button size="lg" className="h-14 px-8 text-lg bg-[#edae00] hover:bg-[#d49b00] text-black font-bold rounded-full w-full sm:w-auto shadow-[0_0_20px_rgba(237,174,0,0.3)]">
-                  Start Coding Free <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="/contest">
-                <Button size="lg" variant="ghost" className="h-14 px-8 text-lg border border-white/10 hover:bg-white/5 hover:text-white rounded-full w-full sm:w-auto">
-                  Explore Contests
-                </Button>
-              </Link>
-            </motion.div>
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+    for (let i = 0; i < 1200; i++) {
+      vertices.push(
+        Math.random() * 2000 - 1000,
+        Math.random() * 2000 - 1000,
+        Math.random() * 2000 - 1000
+      );
+    }
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="pt-4 flex items-center justify-center lg:justify-start gap-4 text-sm text-gray-500"
-            >
-              {/* <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map(i => (
-                  <Avatar key={i} className="w-8 h-8 border-2 border-black bg-gray-800">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                ))}
-              </div> */}
-              {/* <div className="flex flex-col">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-3 h-3 text-[#edae00] fill-[#edae00]" />)}
-                </div>
-                <span>Trusted by 10,000+ devs</span>
-              </div> */}
-            </motion.div>
-          </div>
+    const material = new THREE.PointsMaterial({
+      size: 2,
+      color: new THREE.Color(PRIMARY_HEX),
+      transparent: true,
+      opacity: 0.2,
+      blending: THREE.AdditiveBlending
+    });
 
-          <div className="hidden lg:block order-1 lg:order-2 perspective-1000 relative z-20">
-            <InteractiveTerminal />
-            <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-[#edae00] blur-[80px] opacity-20" />
-          </div>
-        </motion.div>
-      </section>
+    particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+    camera.position.z = 500;
 
-      {/* --- LOGO CLOUD --- */}
-      <section className="py-12 border-y border-white/5 bg-white/2">
-        <div className="container px-4 mx-auto">
-          <p className="text-center text-sm text-gray-500 mb-8 uppercase tracking-widest">Powering teams at innovative companies</p>
-          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-            <div className="flex items-center gap-2 text-xl font-bold"><Github className="w-8 h-8" /> GitHub</div>
-            <div className="flex items-center gap-2 text-xl font-bold"><Slack className="w-8 h-8" /> Slack</div>
-            <div className="flex items-center gap-2 text-xl font-bold"><Figma className="w-8 h-8" /> Figma</div>
-            <div className="flex items-center gap-2 text-xl font-bold"><Trello className="w-8 h-8" /> Trello</div>
-            <div className="flex items-center gap-2 text-xl font-bold"><GitBranch className="w-8 h-8" /> GitLab</div>
-          </div>
-        </div>
-      </section>
+    const animate = () => {
+      requestAnimationFrame(animate);
+      particles.rotation.y += 0.0002;
+      particles.rotation.x += 0.0001;
+      renderer.render(scene, camera);
+    };
 
-      {/* --- FEATURES GRID --- */}
-      <ParallaxSection className=" relative z-10" speed={0.05}>
-        <div className="container px-4 mx-auto">
-          <SectionHeader
-            title="Everything needed to ship."
-            subtitle="A complete environment for coding, testing, and collaboration. No setup required."
-          />
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            <FeatureCard
-              icon={Code2}
-              title="Real-time Collaboration"
-              description="See cursors, selections, and edits instantly. Pair program with zero latency issues."
-              delay={0}
-            />
-            <FeatureCard
-              icon={Trophy}
-              title="Global Contests"
-              description="Compete in weekly algorithmic challenges. Climb the leaderboard and earn badges."
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={Shield}
-              title="Secure Sandbox"
-              description="Execute code in isolated VM2 environments. Support for 20+ languages."
-              delay={0.2}
-            />
-            <FeatureCard
-              icon={MessageSquare}
-              title="Integrated Chat"
-              description="Discuss solutions with voice, video, and text chat right in the editor."
-              delay={0.3}
-            />
-            <FeatureCard
-              icon={Zap}
-              title="Instant Feedback"
-              description="Get real-time linting, error checking, and test case results as you type."
-              delay={0.4}
-            />
-            <FeatureCard
-              icon={Globe}
-              title="Browser Based"
-              description="Access your workspace from any device. Your environment travels with you."
-              delay={0.5}
-            />
-          </div>
-        </div>
-      </ParallaxSection>
+    animate();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, []);
 
-      {/* --- WORKFLOW SECTION --- */}
-      <section className="py-32  relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="container px-4 mx-auto">
-          <SectionHeader title="How CodeLab Works" subtitle="From idea to execution in three simple steps." />
+  return <div ref={containerRef} className="fixed inset-0 -z-10 pointer-events-none" />;
+};
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
-            {/* Connector Line (Desktop) */}
-            <div className="hidden md:block absolute top-24 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-[#edae00]/0 via-[#edae00]/30 to-[#edae00]/0 z-0" />
+// --- Sub-components ---
 
-            <StepCard
-              number="01"
-              title="Create a Room"
-              description="Start a new collaborative session or join an existing one instantly with a unique link."
-            />
-            <StepCard
-              number="02"
-              title="Invite & Code"
-              description="Invite your team. Code together in real-time with shared context and integrated communication tools."
-            />
-            <StepCard
-              number="03"
-              title="Run & Review"
-              description="Execute code in the cloud, run test cases, and review output together seamlessly."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* --- USE CASES SECTION --- */}
-      <section className="py-32  border-t border-white/5 relative z-10">
-        <div className="container px-4 mx-auto">
-          <SectionHeader
-            title="Built for Every Coder"
-            subtitle="Whether you're a student, a hiring manager, or a competitive pro, CodeLab is designed for you."
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            <FeatureCard
-              icon={Users}
-              title="Personal Practice"
-              description="Master new languages, solve problems, and build your portfolio in a clean, zero-config environment."
-              delay={0}
-            />
-            <FeatureCard
-              icon={Briefcase}
-              title="Technical Interviews"
-              description="Conduct seamless remote interviews with real-time code execution, video calls, and shared whiteboards."
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={GraduationCap}
-              title="Colleges & Education"
-              description="Modernize your CS curriculum. Host live coding labs, assignments, and mentorship sessions effortlessly."
-              delay={0.2}
-            />
-            <FeatureCard
-              icon={Trophy}
-              title="Competitive Coding"
-              description="Practice for top-tier competitions or host your own contests with automated judging and live leaderboards."
-              delay={0.3}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* --- LASER SPEED SECTION --- */}
-     <section className="relative py-32 overflow-hidden min-h-dvh flex items-center">
-  {/* Ambient background */}
-  <div className="absolute inset-0 z-0">
-    <LaserFlow
-      color="#edae00"
-      wispDensity={1.5}
-      flowSpeed={0.5}
-      className="opacity-40"
-    />
+const Badge = ({ children }) => (
+  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#edae00]/10 border border-[#edae00]/20 text-[#edae00] text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
+    <span className="relative flex h-2 w-2">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#edae00] opacity-75"></span>
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#edae00]"></span>
+    </span>
+    {children}
   </div>
+);
 
-  {/* Content wrapper */}
-  <div className="relative z-10 container mx-auto px-6">
-    <div className="max-w-5xl mx-auto bg-background/60 backdrop-blur-3xl 
-                    border border-white/10 rounded-3xl p-10 md:p-14">
-
-      {/* Header stack */}
-      <div className="text-center mb-14">
-        <h2 className="text-4xl md:text-5xl font-bold mb-5">
-          Engineered for <span className="text-[#edae00]">Collab</span>
-        </h2>
-        <p className="text-lg md:text-xl text-primary/60 max-w-2xl mx-auto">
-          We’ve optimized the entire stack to deliver lightning-fast,
-          realtime collaboration at global scale.
+const FeatureCard = ({ icon: Icon, title, description, delay = 0 }) => (
+  <FadeIn delay={delay}>
+    <div className="group relative p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-[#edae00]/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden h-full">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#edae00]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="relative z-10">
+        <div className="w-12 h-12 rounded-xl bg-[#edae00]/10 flex items-center justify-center mb-6 text-[#edae00] group-hover:scale-110 group-hover:bg-[#edae00] group-hover:text-black transition-all duration-500">
+          <Icon className="w-6 h-6" />
+        </div>
+        <h3 className="text-xl font-bold mb-3 text-white">{title}</h3>
+        <p className="text-gray-400 leading-relaxed text-sm group-hover:text-gray-300 transition-colors">
+          {description}
         </p>
       </div>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={i}
-              className="group aspect-square flex flex-col items-center justify-center
-                         rounded-2xl p-6 text-center
-                         bg-white/5 border border-white/5
-                         hover:border-[#edae00]/40 hover:bg-white/10
-                         transition-all duration-300"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl
-                              bg-[#edae00]/10 text-[#edae00]
-                              group-hover:scale-110 transition">
-                <Icon size={22} />
-              </div>
-
-              <div className="text-xs uppercase tracking-wider font-bold text-[#edae00]">
-                {stat.label}
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
-  </div>
-</section>
+  </FadeIn>
+);
 
+const RotatingText = ({ texts }) => {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIndex((prev) => (prev + 1) % texts.length), 3000);
+    return () => clearInterval(timer);
+  }, [texts.length]);
 
-      {/* --- ILLUSTRATION / DETAILS --- */}
-      <ParallaxSection speed={0.1} className=" border-t border-white/5 min-h-dvh">
-        <div className="container px-4 mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 mt-auto mb-auto">
-          <div className="order-2 lg:order-1 relative flex justify-center">
-            {/* Abstract Illustration */}
-            <div className="relative w-full max-w-sm aspect-square">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 rounded-full  border-dashed border"
-              />
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-[15%] rounded-full border border-dotted "
-              />
-              <div className="absolute inset-0 grid grid-cols-2 gap-4 p-8">
-                <div className="bg-muted/50 border border-white/5 rounded-2xl p-4 flex flex-col justify-center items-center aspect-square shadow-xl">
-                  <Cpu className="w-8 h-8 text-[#edae00] mb-2" />
-                  <span className="text-xs font-mono text-gray-400">Compute</span>
+  return (
+    <div className="relative h-[1.2em] inline-block overflow-hidden align-bottom min-w-[300px]">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={index}
+          initial={{ y: '100%' }}
+          animate={{ y: '0%' }}
+          exit={{ y: '-100%' }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute left-0 right-0 text-[#edae00]"
+        >
+          {texts[index]}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// --- Main App Component ---
+export default function App() {
+  const { scrollYProgress } = useScroll();
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+
+  return (
+    <div className="min-h-screen bg-[#02040a] text-white selection:bg-[#edae00]/30 overflow-x-hidden font-sans">
+      <div className='absolute w-full h-full'>
+        <Grainient
+          color1="#121212"
+          color2="#4c3b0b"
+          color3="#1b180e"
+          timeSpeed={1.05}
+          colorBalance={-0.02}
+          warpStrength={0.45}
+          warpFrequency={5}
+          warpSpeed={0}
+          warpAmplitude={50}
+          blendAngle={0}
+          blendSoftness={0}
+          rotationAmount={500}
+          noiseScale={2}
+          grainAmount={0.1}
+          grainScale={2}
+          grainAnimated={false}
+          contrast={1.5}
+          gamma={1}
+          saturation={1}
+          centerX={0}
+          centerY={0}
+          zoom={0.9}
+        />
+      </div>
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-[#edae00] to-[#f59e0b] rounded-xl flex items-center justify-center font-black text-black shadow-[0_0_20px_rgba(237,174,0,0.3)]">C</div>
+            <span className="text-xl font-bold tracking-tight">CodeLab</span>
+          </div>
+          <div className="hidden lg:flex items-center gap-10 text-[13px] font-semibold text-gray-400 uppercase tracking-widest">
+            <Link href="/rooms" className="hover:text-white transition-colors">Workspace</Link>
+            <Link href="/contests" className="hover:text-white transition-colors">Contests</Link>
+            <Link href="/problems" className="hover:text-white transition-colors">Problems</Link>
+          </div>
+          <div className="flex items-center gap-6">
+
+            <Link href='/login'>
+              <button className="bg-[#edae00] text-black hover:bg-[#ffbf00] px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-[#edae00]/20">
+                Get Started
+              </button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-48 pb-24 px-6 overflow-hidden ">
+      
+        <motion.div
+          style={{ scale: heroScale, opacity: heroOpacity }}
+          className="text-center max-w-5xl mx-auto z-10 relative min-h-100dvh"
+        >
+
+          <FadeIn delay={0.1}>
+            <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.05] text-shadow-[2px_6px_#5a4242]">
+              Code Together. <br />
+              <RotatingText texts={['Build Faster.', 'Ship Better.', 'Scale Up.']} />
+            </h1>
+          </FadeIn>
+
+          <FadeIn delay={0.2}>
+            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-medium">
+              The high-performance collaborative workspace for engineering teams.
+              Real-time editing, secure runtimes, and integrated intelligence.
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={0.3}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+              <Link href='/dashboard'>
+                <button className="w-full sm:w-auto px-10 py-5 bg-[#edae00] text-black font-black rounded-2xl hover:bg-[#ffbf00] transition-all text-lg flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(237,174,0,0.2)] group">
+                  Start Now <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
+              <Link href='/contests'>
+                <button className="w-full sm:w-auto px-10 py-5 bg-white/5 backdrop-blur-md text-white font-bold rounded-2xl border border-white/10 hover:bg-white/10 transition-all text-lg">
+                  Explore Contests
+                </button>
+              </Link>
+            </div>
+          </FadeIn>
+        </motion.div>
+
+        {/* Floating Stats - Subtle Hero Polish */}
+        <div className="max-w-7xl mx-auto mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 opacity-50  text-shadow-[2px_2px_#000000]">
+          {[
+            { label: 'Sync Latency', val: '< 100ms' },
+            { label: 'Uptime', val: '99.99%' },
+            { label: 'Active Devs', val: '10+' },
+            { label: 'Features', val: '10+' },
+          ].map((stat, i) => (
+            <div key={i} className="text-center ">
+              <div className="text-2xl font-bold text-white">{stat.val}</div>
+              <div className="text-[10px] uppercase tracking-widest text-[#edae00] font-bold">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="py-16 border-y border-white/5  ">
+        <div className="max-w-7xl mx-auto px-6">
+          <p className="text-center text-[10px] text-gray-500 mb-10 uppercase tracking-[0.4em] font-bold">Build with Latest tech</p>
+          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-700 text-shadow-[2px_2px_#000000] ">
+            <div className="flex items-center gap-3 font-bold text-xl bg-transparent backdrop-blur-3xl "><FolderCode /> Node Js</div>
+            <div className="flex items-center gap-3 font-bold text-xl"><Antenna /> Socket</div>
+            <div className="flex items-center gap-3 font-bold text-xl"><SquareCode /> Nextjs</div>
+            <div className="flex items-center gap-3 font-bold text-xl"><Lock /> Docker</div>
+            <div className="flex items-center gap-3 font-bold text-xl"><Activity /> Postgress</div>
+          </div>
+        </div>
+      </section>
+
+      {/* The Workspace - Proof of Product */}
+      <section className=" relative min-h-100dvh">
+          <div className='absolute w-full h-full'>
+          <Grainient
+            color1="#121111"
+            color2="#767060"
+            color3="#312e26"
+            timeSpeed={0.45}
+            colorBalance={0}
+            warpStrength={0}
+            warpFrequency={12}
+            warpSpeed={0}
+            warpAmplitude={50}
+            blendAngle={129}
+            blendSoftness={0}
+            rotationAmount={500}
+            noiseScale={2}
+            grainAmount={0.1}
+            grainScale={2}
+            grainAnimated={false}
+            contrast={1.5}
+            gamma={1}
+            saturation={1}
+            centerX={0}
+            centerY={0}
+            zoom={0.9}
+          />
+        </div>
+        <div className=" py-32 px-6 max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">Designed for <span className="text-[#edae00]">Focus.</span></h2>
+              <p className="text-gray-400 max-w-2xl mx-auto">Every tool you need, integrated into a single, seamless environment.</p>
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={0.2}>
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#edae00]/50 to-orange-500/50 rounded-2xl blur-2xl opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+              <div className="relative bg-[#0b0e14] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                {/* Editor Top Bar */}
+                <div className="bg-[#161b22] border-b border-white/5 p-4 flex items-center justify-between">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500/30"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/30"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500/30"></div>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-1.5 bg-black/40 rounded-lg text-[11px] font-mono text-gray-500 tracking-wider">
+                    <Terminal className="w-3 h-3 text-[#edae00]" />
+                    workspace / collab_engine.rs
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-3">
+                      <div className="w-7 h-7 rounded-full bg-[#edae00] border-2 border-[#161b22] flex items-center justify-center text-[8px] font-bold text-black">GC</div>
+                      <div className="w-7 h-7 rounded-full bg-blue-500 border-2 border-[#161b22] flex items-center justify-center text-[8px] font-bold">SC</div>
+                      <div className="w-7 h-7 rounded-full bg-green-500 border-2 border-[#161b22] flex items-center justify-center text-[8px] font-bold">YS</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-muted/50 border border-white/5 rounded-2xl p-4 flex flex-col justify-center items-center aspect-square shadow-xl translate-y-8">
-                  <Globe className="w-8 h-8 text-blue-500 mb-2" />
-                  <span className="text-xs font-mono text-gray-400">Network</span>
-                </div>
-                <div className="bg-muted/50 border border-white/5 rounded-2xl p-4 flex flex-col justify-center items-center aspect-square shadow-xl -translate-y-8">
-                  <Terminal className="w-8 h-8 text-green-500 mb-2" />
-                  <span className="text-xs font-mono text-gray-400">Shell</span>
-                </div>
-                <div className="bg-muted/50 border border-white/5 rounded-2xl p-4 flex flex-col justify-center items-center aspect-square shadow-xl">
-                  <Layers className="w-8 h-8 text-purple-500 mb-2" />
-                  <span className="text-xs font-mono text-gray-400">Stack</span>
+                {/* Editor Content */}
+                <div className="p-8 grid md:grid-cols-4 gap-8 min-h-[500px]">
+                  <div className="md:col-span-3 font-mono text-sm leading-relaxed overflow-x-auto">
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">1</span><span className="text-purple-400">use</span> std::sync::Arc;</div>
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">2</span><span className="text-purple-400">use</span> tokio::sync::Mutex;</div>
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">3</span><span>&nbsp;</span></div>
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">4</span><span className="text-yellow-500">pub struct</span> <span className="text-[#edae00]">CodeLabStream</span> {'{'}</div>
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">5</span><span className="ml-4 text-blue-300">state</span>: Arc&lt;Mutex&lt;AppState&gt;&gt;,</div>
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">6</span><span className="ml-4 border-l-2 border-[#edae00] pl-2 bg-[#edae00]/5">cursor_pos: <span className="text-green-400">Vec2::new(140, 22)</span>, <span className="animate-pulse">|</span></span></div>
+                    <div className="flex gap-6 mb-1"><span className="text-gray-700 w-4">7</span>{'}'}</div>
+                    <div className="flex gap-6 mb-1 mt-4"><span className="text-gray-700 w-4">8</span><span className="text-gray-600">// Replicating state to 24 edge nodes...</span></div>
+                  </div>
+                  {/* Right Sidebar */}
+                  <div className="hidden md:block bg-black/20 rounded-xl p-5 border border-white/5 h-fit">
+                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                      <Activity className="w-3 h-3 text-[#edae00]" /> Users
+                    </h4>
+                    <div className="space-y-6">
+                      {[
+                        { u: 'Gaurav Chaudhary', action: 'Typing...', color: '#edae00' },
+                        { u: 'Shubham Chaudhary', action: 'Connected', color: '#3b82f6' },
+                        { u: 'Yash Singh', action: 'Idle', color: '#22c55e' },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: item.color }} />
+                          <div>
+                            <div className="text-[11px] font-bold text-gray-300">{item.u}</div>
+                            <div className="text-[9px] text-gray-500">{item.action}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="order-1 lg:order-2">
-            <SectionHeader
-              title="Developer Experience First"
-              subtitle="We built CodeLab because we were tired of context switching. Everything you need is right here."
-              align="left"
-            />
-            <ul className="space-y-6">
-              {[
-                { title: "Keyboard Centric", desc: "Vim & Emacs keybindings supported out of the box." },
-                { title: "Dark Mode Native", desc: "Designed for high contrast and low eye strain." },
-                { title: "Extension Ready", desc: "Customize your environment with themes and snippets." },
-              ].map((item, i) => (
-                <motion.li
-                  key={i}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-start gap-4"
-                >
-                  <div className="mt-1 w-6 h-6 rounded-full bg-[#edae00]/10 flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-4 h-4 text-[#edae00]" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-bold ">{item.title}</h4>
-                    <p className="text-gray-400">{item.desc}</p>
-                  </div>
-                </motion.li>
-              ))}
-            </ul>
-          </div>
+          </FadeIn>
         </div>
-      </ParallaxSection>
+      </section>
 
-      {/* --- PRICING SECTION --- */}
-      <section className="py-24  border-t border-white/5">
-        <div className="container px-4 mx-auto">
-          <SectionHeader title="Simple, Transparent Pricing" subtitle="Start for free, scale as you grow." />
+      {/* Core Features Grid */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <FeatureCard
+            icon={Zap}
+            title="Real-time Engine"
+            description="Built on top of a custom CRDT implementation for conflict-free editing across distributed teams."
+            delay={0}
+          />
+          <FeatureCard
+            icon={Video}
+            title="Spatial Audio & Video"
+            description="Communicate naturally with low-latency WebRTC streams integrated directly into the workspace."
+            delay={0.1}
+          />
+          <FeatureCard
+            icon={Cpu}
+            title="Isolated Runtimes"
+            description="Execute code in gVisor-hardened sandboxes supporting 40+ programming languages instantly."
+            delay={0.2}
+          />
+          <FeatureCard
+            icon={Shield}
+            title="Enterprise Security"
+            description="SOC2 compliant, SSO integration, and role-based access controls for your entire org."
+            delay={0.3}
+          />
+          <FeatureCard
+            icon={Trophy}
+            title="Algorithmic Contests"
+            description="Host global scale hackathons or private hiring assessments with automated grading."
+            delay={0.4}
+          />
+          <FeatureCard
+            icon={Globe}
+            title="Edge Deployment"
+            description="Deploy your workspace to the nearest of our 150+ edge nodes for zero-lag performance."
+            delay={0.5}
+          />
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <PricingCard
-              title="Hobby"
-              price="Free"
-              features={["Unlimited public rooms", "Basic code execution", "Community support", "50MB Storage"]}
-            />
-            <PricingCard
-              title="Pro"
-              price="$12"
-              recommended={true}
-              features={["Unlimited private rooms", "Priority execution", "Voice & Video calls", "Advanced cheat detection", "10GB Storage"]}
-            />
-            <PricingCard
-              title="Team"
-              price="$49"
-              features={["SSO & Admin controls", "Custom branding", "Dedicated infrastructure", "24/7 Priority support", "Unlimited Storage"]}
-            />
+      {/* Anti-Cheat Section - The Unique Value */}
+      <section className="py-32 px-6 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#edae00]/5 blur-[120px] pointer-events-none rounded-full" />
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+          <div className="flex-1">
+            <FadeIn direction="right">
+              <div className="p-3 w-fit bg-[#edae00]/10 rounded-2xl mb-8 text-[#edae00]">
+                <ShieldAlert className="w-10 h-10" />
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight">Integrity <br /><span className="text-[#edae00]">By Design.</span></h2>
+              <p className="text-gray-400 text-lg mb-10 leading-relaxed max-w-xl">
+                Maintain absolute trust in your contests and interviews with our proprietary
+                behavioral analysis engine that detects anomalies in real-time.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {[
+                  "Bulk-paste heuristics",
+                  "Pattern velocity tracking",
+                  "Tab-focus forensics",
+                  "Timeline replay system"
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm font-semibold text-gray-300">
+                    <CheckCircle2 className="w-5 h-5 text-[#edae00]" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
+
+          <div className="flex-1 w-full max-w-xl">
+            <FadeIn delay={0.3} direction="left">
+              <div className="bg-[#12161f] border border-[#edae00]/20 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-6 right-8">
+                  <div className="bg-red-500/10 text-red-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-red-500/20">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                    Security Alert
+                  </div>
+                </div>
+                <h4 className="text-xl font-bold mb-8 flex items-center gap-3">
+                  <Activity className="w-6 h-6 text-[#edae00]" /> Threat Detection
+                </h4>
+                <div className="space-y-4">
+                  <div className="p-6 bg-white/[0.03] rounded-2xl border border-white/5 group hover:bg-white/[0.06] transition-all">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Candidate ID: #8821</span>
+                      <span className="text-[10px] font-bold text-[#edae00]">Risk Score: High</span>
+                    </div>
+                    <div className="text-sm font-bold mb-1">Instantaneous Large Paste</div>
+                    <div className="text-xs text-gray-500 leading-relaxed">Detected 840 characters inserted at Line 42 in 1.4ms. Source: Clipboard (External).</div>
+                  </div>
+                  <div className="p-6 bg-white/[0.03] rounded-2xl border border-white/5 opacity-50">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Candidate ID: #9042</span>
+                      <span className="text-[10px] font-bold text-blue-400">Normal</span>
+                    </div>
+                    <div className="text-sm font-bold mb-1">Consistent Typing Cadence</div>
+                    <div className="text-xs text-gray-500 leading-relaxed">Keystroke timing matches natural developer patterns.</div>
+                  </div>
+                </div>
+                <button className="w-full mt-8 py-4 text-xs text-[#edae00] font-black hover:bg-[#edae00]/10 border border-[#edae00]/20 rounded-xl transition-all uppercase tracking-[0.2em]">
+                  View Full Audit Log
+                </button>
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
-      {/* --- CTA SECTION --- */}
-      <section className="py-32 relative overflow-hidden text-center">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#edae00]/10 to-transparent pointer-events-none" />
+      {/* Simplified Workflow */}
+      <section className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Zero Friction <span className="text-[#edae00]">Workflow.</span></h2>
+            <p className="text-gray-400">Start coding in seconds, not minutes.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+            {/* Desktop Connector */}
+            <div className="hidden md:block absolute top-1/2 left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-[#edae00]/20 to-transparent -translate-y-1/2" />
 
-        <div className="container px-4 mx-auto relative z-10 max-w-3xl">
-          <h2 className="text-4xl md:text-6xl font-bold mb-8">
-            Ready to code <span className="text-[#edae00]">better?</span>
-          </h2>
-          <p className="text-xl text-gray-400 mb-12">
-            Join thousands of developers who are already using CodeLab to collaborate, compete, and build amazing things.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/dashboard">
-              <Button className="h-16 px-12 text-xl rounded-full bg-[#edae00] text-black hover:bg-[#d49b00] font-bold shadow-[0_0_30px_rgba(237,174,0,0.4)] hover:scale-105 transition-all">
-                Get Started Free
-              </Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button variant="outline" className="h-16 px-12 text-xl rounded-full border-white/20 hover:bg-white/10 font-bold hover:scale-105 transition-all">
-                Create Account
-              </Button>
-            </Link>
+            {[
+              { n: '01', t: 'Initialize Room', d: 'Spin up a secure environment instantly with a single command or URL share.' },
+              { n: '02', t: 'Collaborate Live', d: 'Work with your team using shared state, video, and integrated whiteboards.' },
+              { n: '03', t: 'Deploy & Audit', d: 'Execute code in a protected runtime and get detailed performance metrics.' },
+            ].map((step, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
+                <div className="relative z-10 text-center flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full bg-[#edae00]/10 border border-[#edae00]/30 flex items-center justify-center text-3xl font-black text-[#edae00] mb-8 shadow-[0_10px_30px_rgba(237,174,0,0.15)] group-hover:scale-110 transition-transform">
+                    {step.n}
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4">{step.t}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed max-w-[250px]">{step.d}</p>
+                </div>
+              </FadeIn>
+            ))}
           </div>
         </div>
       </section>
 
-      <footer className="py-12 border-t border-white/10  text-gray-500 text-sm">
-        <div className="container px-4 mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#edae00] rounded-lg flex items-center justify-center text-black font-bold">CL</div>
-            <span className="font-bold  text-lg">CodeLab</span>
+      {/* CTA Final */}
+      <section className="py-24 px-6 mb-20">
+        <FadeIn>
+          <div className="max-w-5xl mx-auto rounded-[3.5rem] p-16 md:p-24 text-center relative overflow-hidden border border-white/5 bg-gradient-to-b from-white/[0.05] to-transparent shadow-2xl">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#edae00] to-transparent" />
+
+            <h2 className="text-5xl md:text-7xl font-black mb-10 leading-tight">
+              Ready to code at the <br /> <span className="text-[#edae00]">speed of light?</span>
+            </h2>
+            <p className="text-gray-400 text-lg mb-14 max-w-xl mx-auto font-medium">
+              Join developers  on CodeLab.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <Link href='/dashboard'>
+                <button className="px-12 py-5 bg-[#edae00] text-black font-black rounded-2xl transition-all shadow-xl hover:bg-[#ffbf00] text-lg transform hover:-translate-y-1">
+                  Get Started Free
+                </button>
+              </Link>
+
+            </div>
+
+            <div className="mt-16 flex justify-center gap-8 opacity-40">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"><Shield className="w-4 h-4" /> Enterprise-ready</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"><Zap className="w-4 h-4" /> Global Edge</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"><Lock className="w-4 h-4" /> SOC2 Type II</div>
+            </div>
           </div>
-          <div className="flex gap-8">
-            <Link href="#" className="hover:text-[#edae00] transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-[#edae00] transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-[#edae00] transition-colors">Status</Link>
-            <Link href="#" className="hover:text-[#edae00] transition-colors">GitHub</Link>
+        </FadeIn>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-20 px-6 border-t border-white/5 bg-black/40">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
+          <div className="col-span-1 md:col-span-1">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-8 h-8 bg-[#edae00] rounded-lg flex items-center justify-center font-black text-black">C</div>
+              <span className="text-xl font-bold">CodeLab</span>
+            </div>
+            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+              Revolutionizing technical collaboration for the modern era. Build, test, and ship together.
+            </p>
           </div>
-          <div>
-            &copy; 2026 CodeLab Inc. All rights reserved.
+
+          {[
+            { t: 'Product', l: ['Workspace', 'Code Editor', 'Anti-Cheat', 'Runtimes', 'Security'] },
+            { t: 'Company', l: ['About Us', 'Careers', 'Engineering Blog', 'Brand Assets', 'Contact'] },
+            { t: 'Legal', l: ['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'Security Compliance'] },
+          ].map((col, i) => (
+            <div key={i}>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-white mb-8">{col.t}</h5>
+              <ul className="space-y-4">
+                {col.l.map((item, j) => (
+                  <li key={j}><a href="#" className="text-gray-500 hover:text-[#edae00] text-sm transition-colors">{item}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center pt-12 border-t border-white/5 gap-8">
+          <p className="text-xs text-gray-600 font-medium">© 2025 CodeLab Inc. All rights reserved. Designed for speed.</p>
+          <div className="flex gap-10">
+            <Github className="w-5 h-5 text-gray-600 hover:text-white transition-colors cursor-pointer" />
+            <Slack className="w-5 h-5 text-gray-600 hover:text-white transition-colors cursor-pointer" />
+            <Figma className="w-5 h-5 text-gray-600 hover:text-white transition-colors cursor-pointer" />
           </div>
         </div>
       </footer>
-
     </div>
   );
 }

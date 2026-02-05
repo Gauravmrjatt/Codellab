@@ -72,7 +72,7 @@ export function EditorPanel({
     editingUsers,
     sendCursorPosition,
     defaultCode
-  } = useCodeCoordinator({ roomId  , questionId})
+  } = useCodeCoordinator({ roomId, questionId })
 
   const { fontSize, fontFamily, fontLigatures } = useEditorSettingStore()
 
@@ -173,110 +173,110 @@ export function EditorPanel({
 
   useEffect(() => {
     if (!socket || !editorRef.current || !monacoRef.current) return
-    
+
     const editor = editorRef.current
     const model = editor.getModel()
     if (!model) return
 
     // 1. Handle incoming updates from server
     const handleYjsUpdate = (update: Uint8Array) => {
-        try {
-            // Support Buffer/ArrayBuffer conversion if needed
-            const u = update instanceof Uint8Array ? update : new Uint8Array(update)
-            Y.applyUpdate(yDoc, u)
-        } catch (e) {
-            console.error("Yjs update error:", e)
-        }
+      try {
+        // Support Buffer/ArrayBuffer conversion if needed
+        const u = update instanceof Uint8Array ? update : new Uint8Array(update)
+        Y.applyUpdate(yDoc, u)
+      } catch (e) {
+        console.error("Yjs update error:", e)
+      }
     }
-    
+
     socket.on('code:yjs-update', handleYjsUpdate)
-    
+
     // 2. Sync Yjs -> Monaco (Remote changes)
     const yTextObserver = () => {
-        if (isRemoteUpdate.current) return
-        
-        const remoteText = yText.toString()
-        const localText = model.getValue()
-        
-        if (remoteText !== localText) {
-            isRemoteUpdate.current = true
-            const pos = editor.getPosition()
-            
-            // Full replacement is safest without y-monaco binding
-            // We use pushEditOperations to preserve undo stack somewhat better than setValue
-            // but for collaborative editing, local undo is tricky anyway.
-            model.setValue(remoteText)
-            
-            if (pos) editor.setPosition(pos)
-            isRemoteUpdate.current = false
-        }
+      if (isRemoteUpdate.current) return
+
+      const remoteText = yText.toString()
+      const localText = model.getValue()
+
+      if (remoteText !== localText) {
+        isRemoteUpdate.current = true
+        const pos = editor.getPosition()
+
+        // Full replacement is safest without y-monaco binding
+        // We use pushEditOperations to preserve undo stack somewhat better than setValue
+        // but for collaborative editing, local undo is tricky anyway.
+        model.setValue(remoteText)
+
+        if (pos) editor.setPosition(pos)
+        isRemoteUpdate.current = false
+      }
     }
-    
+
     yText.observe(yTextObserver)
-    
+
     // 3. Sync Monaco -> Yjs (Local changes)
     const disposable = editor.onDidChangeModelContent((e) => {
-        if (isRemoteUpdate.current) return
-        
-        yDoc.transact(() => {
-            e.changes.sort((a, b) => b.rangeOffset - a.rangeOffset).forEach(change => {
-                if (change.rangeLength > 0) {
-                    yText.delete(change.rangeOffset, change.rangeLength)
-                }
-                if (change.text.length > 0) {
-                    yText.insert(change.rangeOffset, change.text)
-                }
-            })
+      if (isRemoteUpdate.current) return
+
+      yDoc.transact(() => {
+        e.changes.sort((a, b) => b.rangeOffset - a.rangeOffset).forEach(change => {
+          if (change.rangeLength > 0) {
+            yText.delete(change.rangeOffset, change.rangeLength)
+          }
+          if (change.text.length > 0) {
+            yText.insert(change.rangeOffset, change.text)
+          }
         })
+      })
     })
 
     // 4. Batching/Flushing loop (Performance)
     const flushInterval = setInterval(() => {
-        if (pendingUpdatesRef.current.length > 0) {
-             const merged = Y.mergeUpdates(pendingUpdatesRef.current)
-             pendingUpdatesRef.current = []
-             socket.emit('code:yjs-update', merged)
-        }
+      if (pendingUpdatesRef.current.length > 0) {
+        const merged = Y.mergeUpdates(pendingUpdatesRef.current)
+        pendingUpdatesRef.current = []
+        socket.emit('code:yjs-update', { roomId, update: merged })
+      }
     }, 50) // 20fps
-    
+
     const updateHandler = (update: Uint8Array, origin: any) => {
-        if (origin !== 'remote') {
-            pendingUpdatesRef.current.push(update)
-        }
+      if (origin !== 'remote') {
+        pendingUpdatesRef.current.push(update)
+      }
     }
     yDoc.on('update', updateHandler)
 
     // 5. Initial Load
     socket.emit('code:request-snapshot', { roomId })
-    
+
     const handleSnapshot = (data: any) => {
-        if (data?.state) {
-             try {
-                 const state = new Uint8Array(data.state.data || data.state)
-                 Y.applyUpdate(yDoc, state)
-             } catch (e) { console.error("Snapshot load error:", e) }
-        } else {
-             // If server empty, init with current code (template)
-             if (yText.toString() === "" && defaultCode) {
-                 yText.insert(0, defaultCode)
-             }
+      if (data?.state) {
+        try {
+          const state = new Uint8Array(data.state.data || data.state)
+          Y.applyUpdate(yDoc, state)
+        } catch (e) { console.error("Snapshot load error:", e) }
+      } else {
+        // If server empty, init with current code (template)
+        if (yText.toString() === "" && defaultCode) {
+          yText.insert(0, defaultCode)
         }
-        // Force sync UI
-        if (yText.toString() !== model.getValue()) {
-            isRemoteUpdate.current = true
-            model.setValue(yText.toString())
-            isRemoteUpdate.current = false
-        }
+      }
+      // Force sync UI
+      if (yText.toString() !== model.getValue()) {
+        isRemoteUpdate.current = true
+        model.setValue(yText.toString())
+        isRemoteUpdate.current = false
+      }
     }
     socket.on('code:snapshot', handleSnapshot)
 
     return () => {
-        socket.off('code:yjs-update', handleYjsUpdate)
-        socket.off('code:snapshot', handleSnapshot)
-        yText.unobserve(yTextObserver)
-        disposable.dispose()
-        yDoc.off('update', updateHandler)
-        clearInterval(flushInterval)
+      socket.off('code:yjs-update', handleYjsUpdate)
+      socket.off('code:snapshot', handleSnapshot)
+      yText.unobserve(yTextObserver)
+      disposable.dispose()
+      yDoc.off('update', updateHandler)
+      clearInterval(flushInterval)
     }
 
   }, [socket, editorRef.current, roomId]) // Add roomId to re-init on room change
@@ -302,7 +302,6 @@ export function EditorPanel({
       (p) => p.userId !== currentUserId && p.isOnline
     )
   }, [participants])
-
   return (
     <div className="h-full flex flex-col relative" onMouseMove={onMouseMove}>
       {activeEditors.length > 0 && (
@@ -421,7 +420,7 @@ export function EditorPanel({
                   <p className="text-xs font-medium">Download</p>
                 </TooltipContent>
               </Tooltip>
-              
+
               <Tooltip key="key2">
                 <TooltipTrigger asChild>
                   <Button
@@ -450,14 +449,14 @@ export function EditorPanel({
           <Editor
             height="100%"
             language={currentLanguage}
-            value={code}
+            value={defaultCode}
             onChange={(v) => {
-                if (isRemoteUpdate.current) {
-                    // Bypass coordinator/broadcast for remote updates, but keep store in sync
-                    useCodeEditorStore.setState({ code: v ?? "" })
-                    return
-                }
-                handleEditorChange(v ?? "")
+              if (isRemoteUpdate.current) {
+                // Bypass coordinator/broadcast for remote updates, but keep store in sync
+                useCodeEditorStore.setState({ code: v ?? "" })
+                return
+              }
+              handleEditorChange(v ?? "")
             }}
             beforeMount={(monaco: Monaco) => {
               monaco.editor.defineTheme("leetcode-dark", {

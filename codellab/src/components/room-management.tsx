@@ -13,7 +13,8 @@ import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useRooms, type Room as APIRoom } from "@/hooks/useRooms"
 import { useEffect } from "react"
-
+import Link from "next/link"
+import {ArrowLeft} from "lucide-react"
 interface Room {
   id: string
   name: string
@@ -78,13 +79,13 @@ export function RoomManagement({ showOnlyMyRooms = false }: { showOnlyMyRooms?: 
 
   useEffect(() => {
     if (showOnlyMyRooms) {
-        getMyRooms().then(data => {
-            if (data) setRooms(data as unknown as APIRoom[])
-        })
+      getMyRooms().then(data => {
+        if (data) setRooms(data as unknown as APIRoom[])
+      })
     } else {
-        getPublicRooms().then(data => {
-            if (data) setRooms(data as unknown as APIRoom[])
-        })
+      getPublicRooms().then(data => {
+        if (data) setRooms(data as unknown as APIRoom[])
+      })
     }
   }, [getPublicRooms, getMyRooms, showOnlyMyRooms])
 
@@ -134,22 +135,22 @@ export function RoomManagement({ showOnlyMyRooms = false }: { showOnlyMyRooms?: 
     }
 
     try {
-        const room = await joinRoomByInvite(inviteCode)
-        if (room) {
-            const success = await joinRoom(room.id, inviteCode)
-            if (success) {
-                toast.success(`Joining room...`)
-                router.push(`/workspace?room=${room.id}`)
-                setJoinDialogOpen(false)
-                setInviteCode("")
-            } else {
-                toast.error("Failed to join room")
-            }
+      const room = await joinRoomByInvite(inviteCode)
+      if (room) {
+        const success = await joinRoom(room.id, inviteCode)
+        if (success) {
+          toast.success(`Joining room...`)
+          router.push(`/workspace?room=${room.id}`)
+          setJoinDialogOpen(false)
+          setInviteCode("")
         } else {
-             toast.error("Invalid invite code or room not found")
+          toast.error("Failed to join room")
         }
+      } else {
+        toast.error("Invalid invite code or room not found")
+      }
     } catch (e) {
-        toast.error("Failed to join room")
+      toast.error("Failed to join room")
     }
   }
 
@@ -184,9 +185,17 @@ export function RoomManagement({ showOnlyMyRooms = false }: { showOnlyMyRooms?: 
     <>
       <Toaster />
       <div className="container mx-auto py-12 px-4 max-w-7xl">
+        <div className="flex items-center gap-2 mb-2">
+          <Button variant="ghost" size="sm" asChild className="-ml-2 h-8">
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back 
+            </Link>
+          </Button>
+        </div>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
           <div>
-            <h1 className="text-4xl font-bold mb-2 tracking-tight text-[#edae00]">Collaborative Coding Rooms</h1>
+            <h1 className="text-4xl font-bold mb-2 tracking-tight ">Collaborative Rooms</h1>
             <p className="text-muted-foreground text-lg">
               Join rooms to solve coding problems together in real-time.
             </p>
@@ -403,7 +412,7 @@ export function RoomManagement({ showOnlyMyRooms = false }: { showOnlyMyRooms?: 
         {rooms.length === 0 && (
           <div className="text-center py-20 border border-dashed border-white/10 rounded-xl bg-white/5">
             <div className="mx-auto h-16 w-16 bg-[#edae00]/10 rounded-full flex items-center justify-center mb-6">
-               <Users className="h-8 w-8 text-[#edae00]" />
+              <Users className="h-8 w-8 text-[#edae00]" />
             </div>
             <h3 className="text-xl font-bold mb-2">No rooms available</h3>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">

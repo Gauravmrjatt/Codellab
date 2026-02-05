@@ -6,7 +6,7 @@ import { FaBloggerB, FaFolderClosed, FaUsers, FaNoteSticky } from "react-icons/f
 import { FaHistory } from "react-icons/fa"
 import { IoIosChatbubbles, IoIosClose } from "react-icons/io"
 import { MdDraw } from "react-icons/md"
-
+import { HiDocumentText } from "react-icons/hi";
 type TabConfig = {
   Icon: React.ComponentType<{ size?: number; color?: string }>
   color: string
@@ -23,7 +23,7 @@ const TAB_CONFIG: Record<string, TabConfig> = {
   note: { Icon: FaNoteSticky, color: "#FFB700" , closable : true },
   whiteboard: { Icon: MdDraw, color: "#FD8DA3", closable: true },
   "test-cases": { Icon: IoCheckboxOutline, color: "#29C244" },
-  "problem-description": { Icon: FaBloggerB, color: "#ff673a" },
+  "problem-description": { Icon: HiDocumentText, color: "#ff673a" },
   submission: { Icon: FaHistory, color: "#615FFF"  , closable : true},
 }
 
