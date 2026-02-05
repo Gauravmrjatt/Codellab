@@ -34,7 +34,7 @@ export default async function ContestPage({ params }: { params: Promise<{ id: st
 
   // Redirect to the first question of the contest in the problem solver
   if (contest.questions.length > 0) {
-    return redirect(`/${contest.questions[0].question.slug}?contestId=${id}`)
+    return redirect(`/problem/${contest.questions[0].question.slug}?contestId=${id}`)
   }
 
   // Helper to determine status

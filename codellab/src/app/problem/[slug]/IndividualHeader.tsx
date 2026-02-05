@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FaNoteSticky } from "react-icons/fa6"
 import { FaHistory } from "react-icons/fa"
-import { MdDraw } from "react-icons/md";
+import { MdDraw , MdLeaderboard } from "react-icons/md";
 import { CraftButton, CraftButtonIcon, CraftButtonIconProps, CraftButtonLabel, CraftButtonLabelProps, CraftButtonProps } from "@/components/ui/craft-button"
 export const microButton: Variants = {
   hover: {
@@ -348,87 +348,47 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
           )}
 
           <div className='flex gap-1'>
-            {contestId ? (
+
+            <div className='flex gap-1'>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.div variants={microButton} whileHover="hover" whileTap="tap">
                     <Button
-                      onClick={handleProblems}
+                      onClick={handleNotes}
                       variant="secondary"
                       size="icon-lg"
-                      className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
+                      className="border border-muted/50 p-2.5 bg-(--group-color)  cursor-pointer"
                     >
                       <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                        <Trophy className="h-4.5 text-orange-500" />
+                        <FaNoteSticky className="h-4.5 text-[#FFB700] " />
                       </motion.div>
                     </Button>
                   </motion.div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                  Contest Problems
+                  Notes
                 </TooltipContent>
               </Tooltip>
-            ) : (
-              // <Tooltip>
-              // <TooltipTrigger asChild>
-              //     <motion.div variants={microButton} whileHover="hover" whileTap="tap">
-              //     <Button
-              //         onClick={handleFiles}
-              //         variant="secondary"
-              //         size="icon-lg"
-              //         className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
-              //     >
-              //         <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-              //         <FileCode className="h-4.5 text-blue-500" />
-              //         </motion.div>
-              //     </Button>
-              //     </motion.div>
-              // </TooltipTrigger>
-              // <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-              //     Files
-              // </TooltipContent>
-              // </Tooltip>
-              <div className='flex gap-1'>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <motion.div variants={microButton} whileHover="hover" whileTap="tap">
-                      <Button
-                        onClick={handleNotes}
-                        variant="secondary"
-                        size="icon-lg"
-                        className="border border-muted/50 p-2.5 bg-(--group-color)  cursor-pointer"
-                      >
-                        <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                          <FaNoteSticky className="h-4.5 text-[#FFB700] " />
-                        </motion.div>
-                      </Button>
-                    </motion.div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                    Notes
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <motion.div variants={microButton} whileHover="hover" whileTap="tap">
-                      <Button
-                        onClick={handleWhiteboard}
-                        variant="secondary"
-                        size="icon-lg"
-                        className="border border-muted/50 p-2.5 bg-(--group-color)  cursor-pointer"
-                      >
-                        <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                          <MdDraw className="h-4 text-[#FD8DA3] " />
-                        </motion.div>
-                      </Button>
-                    </motion.div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
-                    Whiteboard
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div variants={microButton} whileHover="hover" whileTap="tap">
+                    <Button
+                      onClick={handleWhiteboard}
+                      variant="secondary"
+                      size="icon-lg"
+                      className="border border-muted/50 p-2.5 bg-(--group-color)  cursor-pointer"
+                    >
+                      <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
+                        <MdDraw className="h-4 text-[#FD8DA3] " />
+                      </motion.div>
+                    </Button>
+                  </motion.div>
+                </TooltipTrigger>
+                <TooltipContent className="bg-muted/50 backdrop-blur-3xl text-muted-foreground mt-2 border">
+                  Whiteboard
+                </TooltipContent>
+              </Tooltip>
+            </div>
 
             {contestId && (
               <Tooltip>
@@ -441,7 +401,7 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
                       className="border border-muted/50 p-2.5 bg-(--group-color) cursor-pointer"
                     >
                       <motion.div variants={iconMicro} whileHover="hover" whileTap="tap">
-                        <Trophy className="h-4.5 text-yellow-500" />
+                        <MdLeaderboard className="h-4.5 text-yellow-500" />
                       </motion.div>
                     </Button>
                   </motion.div>
@@ -479,15 +439,15 @@ export default function IndividualHeader({ roomId, roomName, questionId, userRoo
         {/* Right */}
         <div className="flex items-center gap-2 md:gap-3">
 
-         
-           {!contestId && (
-          <Button onClick={() => setIsRoomDialogOpen(true)} className="text-white shadow-md  bg-gradient-to-r from-purple-500/80 via-purple-600 to-purple-700/60 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-base text-sm px-4 py-2 text-center leading-5 rounded-md transition-all">
-           <span className="relative  w-full justify-center items-center flex text-left text-white transition-colors duration-200 ease-in-out group-hover:text-white">
-              <Users className="w-4 h-4 mr-2" />
-              Open in Workspace
-            </span>
-          </Button>
-           )}
+
+          {!contestId && (
+            <Button onClick={() => setIsRoomDialogOpen(true)} className="text-white shadow-md  bg-gradient-to-r from-purple-500/80 via-purple-600 to-purple-700/60 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-base text-sm px-4 py-2 text-center leading-5 rounded-md transition-all">
+              <span className="relative  w-full justify-center items-center flex text-left text-white transition-colors duration-200 ease-in-out group-hover:text-white">
+                <Users className="w-4 h-4 mr-2" />
+                Open in Workspace
+              </span>
+            </Button>
+          )}
           <div className="flex items-center gap-1">
 
             {/* Layout */}

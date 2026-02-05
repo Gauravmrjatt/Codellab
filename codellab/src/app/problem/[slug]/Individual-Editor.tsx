@@ -149,28 +149,60 @@ function SidebarPanel({ params }: any) {
   if (type === "contest-problems") {
     return (
       <Card className="h-full bg-transparent border-0 flex flex-col">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-yellow-500" />
-            Problems
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-auto space-y-2">
-          {contest?.questions?.map((cq: any, index: number) => (
-            <button
-              key={cq.question.id}
-              onClick={() => router.push(`/${cq.question.slug}?contestId=${contest.id}`)}
-              className={`w-full text-left p-3 border rounded-md transition-colors ${cq.question.id === questionId
-                ? "bg-primary/10 text-primary border-primary"
-                : "hover:bg-muted"
-                }`}
-            >
-              <div className="font-medium text-sm">{index + 1}. {cq.question.title}</div>
-              <div className="text-xs text-muted-foreground">{cq.points} pts • {cq.question.difficulty}</div>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
+  <CardHeader className="pb-3">
+    <CardTitle className="text-sm flex items-center gap-2 font-semibold">
+      <Trophy className="h-4 w-4 text-yellow-500" />
+      Problems
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent className="flex-1 overflow-auto space-y-2 pr-1">
+    {contest?.questions?.map((cq: any, index: number) => {
+      const isActive = cq.question.id === questionId
+
+      return (
+        <button
+          key={cq.question.id}
+          onClick={() =>
+            router.push(`/problem/${cq.question.slug}?contestId=${contest.id}`)
+          }
+          className={`
+            group w-full text-left rounded-lg border p-3 transition-all
+            ${isActive
+              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+              : "border-border hover:bg-muted/60 hover:border-muted-foreground/30"
+            }
+          `}
+        >
+          <div className="flex items-start justify-between gap-3">
+            {/* Left */}
+            <div className="space-y-1">
+              <div
+                className={`text-sm font-medium leading-tight
+                  ${isActive ? "text-primary" : "group-hover:text-foreground"}
+                `}
+              >
+                {index + 1}. {cq.question.title}
+              </div>
+
+              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <span>{cq.points} pts</span>
+                <span>•</span>
+                <span className="capitalize">{cq.question.difficulty}</span>
+              </div>
+            </div>
+
+            {/* Right indicator */}
+            {isActive && (
+              <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
+            )}
+          </div>
+        </button>
+      )
+    })}
+  </CardContent>
+</Card>
+
     )
   }
   if (type === "note") {

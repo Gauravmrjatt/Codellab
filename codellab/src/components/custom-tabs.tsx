@@ -2,10 +2,10 @@ import React from "react"
 import type { IDockviewPanelHeaderProps } from "dockview"
 import { File, Code, Play, Terminal } from "lucide-react"
 import { IoCheckboxOutline } from "react-icons/io5"
-import { FaBloggerB, FaFolderClosed, FaUsers, FaNoteSticky } from "react-icons/fa6"
+import { FaBloggerB, FaFolderClosed, FaUsers, FaNoteSticky , FaList } from "react-icons/fa6"
 import { FaHistory } from "react-icons/fa"
 import { IoIosChatbubbles, IoIosClose } from "react-icons/io"
-import { MdDraw } from "react-icons/md"
+import { MdDraw , MdLeaderboard} from "react-icons/md"
 import { HiDocumentText } from "react-icons/hi";
 type TabConfig = {
   Icon: React.ComponentType<{ size?: number; color?: string }>
@@ -25,6 +25,8 @@ const TAB_CONFIG: Record<string, TabConfig> = {
   "test-cases": { Icon: IoCheckboxOutline, color: "#29C244" },
   "problem-description": { Icon: HiDocumentText, color: "#ff673a" },
   submission: { Icon: FaHistory, color: "#615FFF"  , closable : true},
+  "contest-problems" : {Icon: FaList , color : "#de76ff"},
+  "leaderboard" : {Icon: MdLeaderboard , color : "#FFB700" , closable : true},
 }
 
 export function CustomTab({ api }: IDockviewPanelHeaderProps) {

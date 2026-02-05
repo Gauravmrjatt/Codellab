@@ -22,7 +22,13 @@ const PRIMARY_HEX = "#edae00";
 const PRIMARY_GLOW = "rgba(237, 174, 0, 0.15)";
 import Grainient from "@/components/Grainient"
 // --- Reusable Motion Components ---
-const FadeIn = ({ children, delay = 0, direction = 'up' }) => {
+interface FadeInProps {
+  children: React.ReactNode;
+  delay?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+}
+
+const FadeIn = ({ children, delay = 0, direction = 'up' }: FadeInProps) => {
   const directions = {
     up: { y: 20, x: 0 },
     down: { y: -20, x: 0 },
@@ -44,11 +50,12 @@ const FadeIn = ({ children, delay = 0, direction = 'up' }) => {
 
 // --- Background Component (Three.js) ---
 const ThreeBackground = () => {
-  const containerRef = useRef();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let scene, camera, renderer, particles;
+    let scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer, particles: THREE.Points;
     const container = containerRef.current;
+    if (!container) return;
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -108,7 +115,11 @@ const ThreeBackground = () => {
 
 // --- Sub-components ---
 
-const Badge = ({ children }) => (
+interface BadgeProps {
+  children: React.ReactNode;
+}
+
+const Badge = ({ children }: BadgeProps) => (
   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#edae00]/10 border border-[#edae00]/20 text-[#edae00] text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
     <span className="relative flex h-2 w-2">
       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#edae00] opacity-75"></span>
@@ -118,7 +129,14 @@ const Badge = ({ children }) => (
   </div>
 );
 
-const FeatureCard = ({ icon: Icon, title, description, delay = 0 }) => (
+interface FeatureCardProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  delay?: number;
+}
+
+const FeatureCard = ({ icon: Icon, title, description, delay = 0 }: FeatureCardProps) => (
   <FadeIn delay={delay}>
     <div className="group relative p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-[#edae00]/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden h-full">
       <div className="absolute inset-0 bg-gradient-to-br from-[#edae00]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -135,7 +153,11 @@ const FeatureCard = ({ icon: Icon, title, description, delay = 0 }) => (
   </FadeIn>
 );
 
-const RotatingText = ({ texts }) => {
+interface RotatingTextProps {
+  texts: string[];
+}
+
+const RotatingText = ({ texts }: RotatingTextProps) => {
   const [index, setIndex] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => setIndex((prev) => (prev + 1) % texts.length), 3000);
