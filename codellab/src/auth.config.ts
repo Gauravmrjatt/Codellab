@@ -1,4 +1,5 @@
 import { NextAuthConfig } from 'next-auth';
+import { NextResponse } from 'next/server';
 
 export const authConfig = {
     pages: {
@@ -8,26 +9,26 @@ export const authConfig = {
         // Added later in auth.ts
     ],
     callbacks: {
-        authorized({ auth, request: { nextUrl } }) {
+        authorized({ auth, request }) {
+            const { nextUrl } = request;
             const isLoggedIn = !!auth?.user;
-            const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') ||
+            const origin = nextUrl.origin;
+            const isOnDashboard =
+                nextUrl.pathname.startsWith('/dashboard') ||
                 nextUrl.pathname.startsWith('/rooms') ||
                 nextUrl.pathname.startsWith('/contests') ||
-                (nextUrl.pathname.startsWith('/problems') && nextUrl.pathname !== '/problems'); // Allow viewing list, potentially block details? No, let's allow public access to problems list but maybe not entering?
-
-            // For now, let's protect /dashboard, /rooms (create), /contest (participate)
-            // Actually strictly protecting /rooms and /dashboard is good.
-
-            if (isOnDashboard) {
-                if (isLoggedIn) return true;
-                // Redirect unauthenticated users to login page, preserving the current URL as callback
-                const callbackUrl = encodeURIComponent(nextUrl.pathname + nextUrl.search);
-                return Response.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl));
-            } else if (isLoggedIn) {
-                // Redirect logged-in users away from login/register
-                if (nextUrl.pathname === '/login' || nextUrl.pathname === '/register') {
-                    return Response.redirect(new URL('/dashboard', nextUrl));
-                }
+                (nextUrl.pathname.startsWith('/problems') &&
+                    nextUrl.pathname !== '/problems');
+            if (isOnDashboard && !isLoggedIn) {
+                const loginUrl = new URL('/login', origin);
+                loginUrl.searchParams.set('callbackUrl', nextUrl.href);
+                return NextResponse.redirect(loginUrl);
+            }
+            if (
+                isLoggedIn &&
+                (nextUrl.pathname === '/login' || nextUrl.pathname === '/register')
+            ) {
+                return NextResponse.redirect(new URL('/dashboard', origin));
             }
             return true;
         },

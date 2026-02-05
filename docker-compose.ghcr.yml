@@ -21,10 +21,13 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-codellab}:${POSTGRES_PASSWORD:-codellab_password}@postgres:5432/${POSTGRES_DB:-codellab}?schema=public
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - AUTH_URL=${AUTH_URL:-${NEXTAUTH_URL:-http://localhost:3000}}
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-changeme_in_production}
-      - NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-      - JUDGE_SERVICE_URL=http://judge:3000
+      - AUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:-changeme_in_production}}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3001}
+      - JUDGE_SERVICE_URL=${JUDGE_SERVICE_URL:-http://judge:3000}
     depends_on:
       - postgres
       - judge
