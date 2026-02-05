@@ -20,7 +20,9 @@ export const authConfig = {
 
             if (isOnDashboard) {
                 if (isLoggedIn) return true;
-                return false; // Redirect unauthenticated users to login page
+                // Redirect unauthenticated users to login page, preserving the current URL as callback
+                const callbackUrl = encodeURIComponent(nextUrl.pathname + nextUrl.search);
+                return Response.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl));
             } else if (isLoggedIn) {
                 // Redirect logged-in users away from login/register
                 if (nextUrl.pathname === '/login' || nextUrl.pathname === '/register') {

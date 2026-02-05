@@ -20,7 +20,10 @@ export async function authenticate(
     formData: FormData,
 ) {
     try {
-        await signIn('credentials', Object.fromEntries(formData));
+        const data = Object.fromEntries(formData);
+        // Map callbackUrl to redirectTo for NextAuth v5
+        const redirectTo = (data.callbackUrl as string) || '/dashboard';
+        await signIn('credentials', { ...data, redirectTo });
     } catch (error) {
         if (error instanceof AuthError) {
             switch (error.type) {
