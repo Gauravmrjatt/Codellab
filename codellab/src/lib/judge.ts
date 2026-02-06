@@ -172,14 +172,25 @@ export async function runTestCases(
         let input: any[];
         let expected: any;
 
-        if (t.inputs !== undefined && t.expected_output !== undefined) {
-            // New structured format
-            input = parseStructuredInput(t.inputs);
-            expected = t.expected_output;
+        // Structured format (inputs is an object or array)
+        if (t.inputs !== null && t.inputs !== undefined && (Array.isArray(t.inputs) || Object.keys(t.inputs).length > 0)) {
+            input = Array.isArray(t.inputs) ? t.inputs : parseStructuredInput(t.inputs);
+            
+            if (t.expected_output !== undefined) {
+                expected = t.expected_output;
+            } else if (t.output) {
+                try { expected = JSON.parse(t.output); } catch { expected = t.output; }
+            } else {
+                expected = null;
+            }
         } else {
             // Old format for backward compatibility
             input = parseTestCaseInput(t.input || "");
-            expected = JSON.parse(t.output || "null");
+            if (t.expected_output !== undefined && t.expected_output !== null) {
+                expected = t.expected_output;
+            } else {
+                try { expected = JSON.parse(t.output || "null"); } catch { expected = t.output; }
+            }
         }
 
         let result: ExecutionResult;

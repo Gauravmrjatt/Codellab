@@ -375,6 +375,7 @@ export function IndividualEditor({
                 } else {
                   api.getPanel('contest-problems')?.api.close();
                   api.getPanel('leaderboard')?.api.close();
+                  api.getPanel('submission')?.api.close();
                 }
 
                 // Ensure essential panels exist

@@ -97,6 +97,7 @@ export function useCodeCoordinator({
           if (!res.ok) throw new Error("Failed to load default");
           const data = await res.json();
           setDefaultCode(data.code)
+          setCode(data.code)
         } catch (e) {
           return null;
         } finally {
@@ -106,8 +107,10 @@ export function useCodeCoordinator({
     } else {
       if (initialCode) {
         setDefaultCode(initialCode);
+        setCode(initialCode)
       } else if (initialLanguage) {
         setDefaultCode(templates[initialLanguage as keyof typeof templates] || templates.javascript)
+        setDefaultCode(templates[initialLanguage as keyof typeof templates] || templates.javascript);
       }
     }
   }, [questionId, initialCode, initialLanguage, currentLanguage])

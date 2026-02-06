@@ -9,10 +9,17 @@ import { GoXCircleFill } from "react-icons/go";
 
 interface TestCase {
   id: string;
-  input: Record<string, any>[];     // API shape
+  input: any[];     // API shape: array of values
   expectedOutput: any;
   actualOutput?: any;
   isPublic: boolean;
+}
+
+interface InputDefinition {
+  id: string;
+  name: string;
+  type: string;
+  order: number;
 }
 
 interface TestCasesPanelProps {
@@ -27,6 +34,7 @@ export function TestCasesPanel({
   testCases: propTestCases,
 }: TestCasesPanelProps) {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [inputs, setInputs] = useState<InputDefinition[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +44,18 @@ export function TestCasesPanel({
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
+        
+        // Fetch Question to get input definitions
+        const qRes = await fetch(`/api/questions/${questionId}`);
+        if (qRes.ok) {
+          const qData = await qRes.json();
+          setInputs(qData.inputs || []);
+        }
+
         if (propTestCases && propTestCases.length > 0) {
           setTestCases(propTestCases);
+          setLoading(false);
           return;
         }
 
@@ -94,16 +112,20 @@ export function TestCasesPanel({
   /**
    * Format input object → readable text
    */
-  const formatInput = (input: Record<string, any>[]) => {
-    if (!input || input.length === 0) return "—";
+  const formatInput = (input: any[]) => {
+    if (!input || !Array.isArray(input)) return [];
 
-    const params = input[0]; // LeetCode-style
-    return Object.entries(params)
-      .map(([key, value]) => `${key} = ${JSON.stringify(value)}`)
-      .join("\n");
+    return input.map((value, idx) => {
+      const def = inputs.find(i => i.order === idx);
+      const name = def ? def.name : `Input ${idx + 1}`;
+      return {
+        name,
+        value: JSON.stringify(value)
+      };
+    });
   };
 
-  const formattedInput = formatInput(activeTestCase.input);
+  const formattedInputs = formatInput(activeTestCase.input);
 
   return (
     <div className="h-full flex flex-col bg-(--group-color) overflow-scroll">
@@ -167,25 +189,23 @@ export function TestCasesPanel({
 
         <div className="space-y-4  p-5  text-sm font-mono">
           {/* Input */}
-
-          {formattedInput.includes("\n") ? (
-            <div className="space-y-2">
-              {formattedInput.split("\n").map((line, idx) => (
-                <div key={idx}>
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Input {idx + 1}
-                  </p>
-                  <pre className="bg-muted p-3 rounded-md mt-1">
-                    {line}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <pre className="bg-muted p-3 rounded-md">
-              {formattedInput}
-            </pre>
-          )}
+          <div className="space-y-2">
+            {formattedInputs.map((item, idx) => (
+              <div key={idx}>
+                <p className="text-xs text-muted-foreground mt-3">
+                  {item.name}
+                </p>
+                <pre className="bg-muted p-3 rounded-md mt-1">
+                  {item.value}
+                </pre>
+              </div>
+            ))}
+            {formattedInputs.length === 0 && (
+              <pre className="bg-muted p-3 rounded-md">
+                —
+              </pre>
+            )}
+          </div>
 
           {/* Expected Output */}
           <div>

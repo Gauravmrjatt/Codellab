@@ -446,10 +446,10 @@ export function EditorPanel({
           </div>
         </TooltipProvider>
         <CardContent className="flex-1 mt-[-20px] p-0 relative">
-          <Editor
+          <Editor 
             height="100%"
             language={currentLanguage}
-            value={defaultCode}
+            value={code}
             onChange={(v) => {
               if (isRemoteUpdate.current) {
                 // Bypass coordinator/broadcast for remote updates, but keep store in sync

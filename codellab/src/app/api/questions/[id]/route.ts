@@ -101,7 +101,7 @@ export async function PUT(
                     testCases: {
                         create: testCases?.map((tc: any) => ({
                             inputs: tc.inputs,
-                            expectedOutput: tc.expected_output,
+                            expectedOutput: tc.expected_output ?? tc.expectedOutput,
                             visibility: tc.visibility
                         })) || []
                     },

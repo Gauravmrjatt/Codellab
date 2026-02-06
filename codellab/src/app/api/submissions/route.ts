@@ -68,8 +68,10 @@ export async function POST(req: Request) {
             try {
                 // Transform test cases to the format expected by runTestCases
                 const transformedCasesToRun = casesToRun.map(tc => ({
-                    inputs: (tc.inputs && typeof tc.inputs === 'object') ? tc.inputs as Record<string, any> : {},
-                    expected_output: tc.expectedOutput,
+                    input: tc.input,
+                    output: tc.output,
+                    inputs: tc.inputs as any,
+                    expected_output: tc.expectedOutput || (tc as any).expected_output,
                     visibility: tc.visibility
                 }));
 
@@ -138,7 +140,9 @@ export async function POST(req: Request) {
         try {
             // Transform test cases to the format expected by runTestCases
             const transformedTestCases = question.testCases.map(tc => ({
-                inputs: (tc.inputs && typeof tc.inputs === 'object') ? tc.inputs as Record<string, any> : {},
+                input: tc.input,
+                output: tc.output,
+                inputs: tc.inputs as any,
                 expected_output: tc.expectedOutput,
                 visibility: tc.visibility
             }));

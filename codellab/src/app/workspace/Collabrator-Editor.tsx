@@ -280,7 +280,8 @@ export function CollaborativeEditor({
                     ...globalParams,
                   })
                 })
-
+    
+                api.getPanel('submission')?.api.close();
                 // Add problem description and test cases panels if questionId is present
                 if (questionId) {
                   // Add problem description panel if it doesn't exist
@@ -434,7 +435,7 @@ export function CollaborativeEditor({
                     title: "Test Cases",
                     minimumWidth: 300,
                     initialWidth: 900,
-                    minimumHeight : 45,
+                    minimumHeight: 45,
                     position: { referencePanel: "output", direction: "within", index: 0 },
                     params: {
                       roomId,
