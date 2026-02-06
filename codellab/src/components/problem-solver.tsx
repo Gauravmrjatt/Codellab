@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { type Question } from "@prisma/client"
 import { useRouter } from "next/navigation"
 import {

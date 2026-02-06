@@ -51,17 +51,17 @@ export async function POST(req: Request) {
 
             // Transform test cases to the format expected by runTestCases
             const transformedTestCases = testCases.map(tc => ({
-                input: tc.input,
-                output: tc.output,
-                inputs: tc.inputs as any,
-                expected_output: tc.expectedOutput,
-                visibility: tc.visibility
+                input: tc.input ?? undefined,
+                output: tc.output ?? undefined,
+                inputs: (tc.inputs as Record<string, any>) ?? undefined,
+                expected_output: tc.expectedOutput ?? undefined,
+                visibility: tc.visibility ?? undefined
             }));
 
             const { results, verdict } = await runTestCases(
                 code,
                 language,
-                transformedTestCases,
+                transformedTestCases as any,
                 question.timeLimit,
                 question.functionName || 'solve'
             );

@@ -160,7 +160,7 @@ function parseValue(token: string): any {
 export async function runTestCases(
     code: string,
     language: string,
-    testCases: Array<{ input?: string; output?: string; inputs?: Record<string, any>; expected_output?: any; visibility?: string }>,
+    testCases: Array<{ input?: string | null; output?: string | null; inputs?: Record<string, any> | null; expected_output?: any; visibility?: string | null }>,
     timeLimitMs = 2000,
     functionName: string = 'solve'
 ): Promise<{ results: TestCaseResult[]; verdict: string }> {
