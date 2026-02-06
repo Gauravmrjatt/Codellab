@@ -24,6 +24,9 @@ export function ProblemDescriptionPanel({ roomId, questionId }: ProblemDescripti
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
+        setLoading(true);
+        setQuestion(null);
+        setError(null);
         const response = await fetch(`/api/questions/${questionId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch question");

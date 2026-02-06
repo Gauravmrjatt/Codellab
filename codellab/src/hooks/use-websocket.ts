@@ -19,7 +19,7 @@ export function useWebSocket(
   const [isConnected, setIsConnected] = useState(false)
   const [drawingSnapshot, setDrawingSnapshot] = useState<any>(null)
   const { applyExecutionState } = useExecutionState()
-  const { setLanguage, setCode, setIsRunning } = useCodeEditorStore()
+  const { setLanguage, setIsRunning } = useCodeEditorStore()
   const { dockviewRef } = useDockRefStore()
 
   useEffect(() => {
@@ -148,7 +148,10 @@ export function useWebSocket(
 
     // Code changes
     socket.on("code:change", (change: CodeChange) => {
-      setCode(change.changes[0].content)
+      // NOTE: We no longer call setCode here because it causes the editor to reset/ghost-write
+      // when multiple users type. Yjs in EditorPanel now handles granular content sync.
+      // setCode(change.changes[0].content) 
+      
       setLanguage(change.changes[0].currentLanguage)
       onCodeChange?.(change)
     })

@@ -81,6 +81,7 @@ export const useCodeEditorStore = create<CodeEditorState>()(
             isRunning: false,
             roomId: undefined,
             questionId: undefined,
+            testCaseResults: undefined,
           }),
       }),
       // {

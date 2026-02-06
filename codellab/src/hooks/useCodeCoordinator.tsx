@@ -89,6 +89,7 @@ export function useCodeCoordinator({
   }, [roomId, questionId, reset, setRoomId, setQuestionId])
 
   useEffect(() => {
+    let ignore = false;
     // If we have a questionId, fetch the default code for that question
     if (questionId) {
       const load = async () => {
@@ -96,11 +97,12 @@ export function useCodeCoordinator({
           const res = await fetch(`/api/questions/${questionId}/default-code?lang=${currentLanguage}&autoGenerate=true`);
           if (!res.ok) throw new Error("Failed to load default");
           const data = await res.json();
-          setDefaultCode(data.code)
-          setCode(data.code)
+          if (!ignore) {
+            setDefaultCode(data.code)
+            setCode(data.code)
+          }
         } catch (e) {
           return null;
-        } finally {
         }
       };
       load();
@@ -109,10 +111,10 @@ export function useCodeCoordinator({
         setDefaultCode(initialCode);
         setCode(initialCode)
       } else if (initialLanguage) {
-        setDefaultCode(templates[initialLanguage as keyof typeof templates] || templates.javascript)
         setDefaultCode(templates[initialLanguage as keyof typeof templates] || templates.javascript);
       }
     }
+    return () => { ignore = true; };
   }, [questionId, initialCode, initialLanguage, currentLanguage])
 
   // used to detect for paste cheating

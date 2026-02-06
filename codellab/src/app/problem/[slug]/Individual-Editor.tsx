@@ -283,6 +283,53 @@ export function IndividualEditor({
   const dockviewRef = useRef<DockviewApi | null>(null)
   const { setDockviewRef } = useDockRefStore()
 
+  useEffect(() => {
+    if (dockviewRef.current) {
+      const panel = dockviewRef.current.getPanel('files');
+      if (panel) {
+        panel.api.updateParameters({ files, activeFile });
+      }
+    }
+  }, [files, activeFile]);
+
+  useEffect(() => {
+    if (dockviewRef.current) {
+      const api = dockviewRef.current;
+      api.panels.forEach(panel => {
+        panel.api.updateParameters({ questionId, contest });
+      });
+
+      if (questionId) {
+        if (!api.getPanel('problem-description')) {
+          api.addPanel({
+            tabComponent: "default",
+            id: "problem-description",
+            component: "problem-description",
+            title: "Description",
+            minimumHeight: 100,
+            minimumWidth: 300,
+            initialWidth: 400,
+            position: { referencePanel: api.panels[0]?.id || "editor", direction: "left" },
+            params: { roomId, questionId },
+          });
+        }
+        if (!api.getPanel('test-cases')) {
+          api.addPanel({
+            tabComponent: "default",
+            id: "test-cases",
+            component: "test-cases",
+            title: "Test Cases",
+            minimumWidth: 300,
+            initialWidth: 900,
+            minimumHeight: 45,
+            position: { referencePanel: "problem-description", direction: "below" },
+            params: { roomId, questionId },
+          });
+        }
+      }
+    }
+  }, [questionId, roomId, contest]);
+
   const handleCreateFile = async (name: string) => {
     try {
       const res = await fetch(`/api/rooms/${roomId}/files`, {
@@ -334,11 +381,11 @@ export function IndividualEditor({
             className="h-full"
             components={{
               sidebar: SidebarPanel,
-              editor: ({ params }) => <EditorPanel {...params} />,
+              editor: (props) => <EditorPanel key={`${props.params.roomId}-${props.params.questionId}`} {...props.params} />,
               output: ({ params }) => <OutputPanel {...params} />,
               console: ({ params }) => <ConsolePanel {...params} />,
-              "problem-description": ({ params }) => <ProblemDescriptionPanel {...params} />,
-              "test-cases": ({ params }) => <TestCasesPanel {...params} />,
+              "problem-description": (props) => <ProblemDescriptionPanel key={props.params.questionId} {...props.params} />,
+              "test-cases": (props) => <TestCasesPanel key={props.params.questionId} {...props.params} />,
             }}
             tabComponents={{
               default: CustomTab
@@ -359,7 +406,35 @@ export function IndividualEditor({
               const storageKey = `dockview-layout-individual${contestId ? "-contest" : ""}`;
               const saved = localStorage.getItem(storageKey);
               if (saved) {
-                api.fromJSON(JSON.parse(saved))
+                const layout = JSON.parse(saved);
+
+                // Helper to recursively update params in the layout JSON
+                const updateParamsRecursive = (item: any) => {
+                  if (item.tabs) {
+                    item.tabs.forEach((tab: any) => {
+                      if (tab.content) {
+                        tab.content.params = {
+                          ...tab.content.params,
+                          ...globalParams,
+                          // Also restore non-serializable params for specific panels
+                          ...(tab.id === 'files' ? { files, activeFile, setActiveFile, handleCreateFile } : {}),
+                          ...(tab.id === 'editor' ? { roomId, currentUserId, currentUsername, questionId } : {}),
+                          ...(tab.id === 'problem-description' || tab.id === 'test-cases' ? { roomId, questionId } : {}),
+                          ...(tab.id === 'contest-problems' ? { contest, questionId } : {}),
+                        };
+                      }
+                    });
+                  }
+                  if (item.children) {
+                    item.children.forEach(updateParamsRecursive);
+                  }
+                };
+
+                if (layout.main) {
+                  updateParamsRecursive(layout.main);
+                }
+
+                api.fromJSON(layout)
 
                 // Inject global params into all restored panels
                 api.panels.forEach(panel => {

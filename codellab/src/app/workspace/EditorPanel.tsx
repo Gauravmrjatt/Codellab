@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Braces, FileCode2, Code2, Coffee } from "lucide-react"
 import { useCodeCoordinator } from "@/hooks/useCodeCoordinator"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { cn } from "@/lib/utils"   // ← assuming you have this helper (clsx + tailwind-merge)
 import { useRef } from "react"
 import { EditorCursor, EditorPanelProps, RemoteCursorDecorations } from "@/types/editor-panel"
@@ -160,16 +160,17 @@ export function EditorPanel({
   // ────────────────────────────────────────────────
   // Yjs Synchronization Logic
   // ────────────────────────────────────────────────
-  const yDocRef = useRef<Y.Doc | null>(null)
+  const [yDoc, setYDoc] = useState(() => new Y.Doc())
+  const yText = useMemo(() => yDoc.getText('monaco'), [yDoc])
   const isRemoteUpdate = useRef(false)
   const pendingUpdatesRef = useRef<Uint8Array[]>([])
   const { socket } = useWS()
 
-  if (!yDocRef.current) {
-    yDocRef.current = new Y.Doc()
-  }
-  const yDoc = yDocRef.current
-  const yText = yDoc.getText('monaco')
+  // Reset Yjs document when room or question changes to avoid stale state
+  useEffect(() => {
+    setYDoc(new Y.Doc())
+    pendingUpdatesRef.current = []
+  }, [roomId, questionId])
 
   useEffect(() => {
     if (!socket || !editorRef.current || !monacoRef.current) return
@@ -206,6 +207,9 @@ export function EditorPanel({
         // We use pushEditOperations to preserve undo stack somewhat better than setValue
         // but for collaborative editing, local undo is tricky anyway.
         model.setValue(remoteText)
+        
+        // IMPORTANT: Update the store so other components (Header, Output, etc.) see the remote changes
+        useCodeEditorStore.setState({ code: remoteText })
 
         if (pos) editor.setPosition(pos)
         isRemoteUpdate.current = false
@@ -237,7 +241,7 @@ export function EditorPanel({
         pendingUpdatesRef.current = []
         socket.emit('code:yjs-update', { roomId, update: merged })
       }
-    }, 50) // 20fps
+    }, 30) // ~33fps - smoother feel
 
     const updateHandler = (update: Uint8Array, origin: any) => {
       if (origin !== 'remote') {
@@ -279,7 +283,7 @@ export function EditorPanel({
       clearInterval(flushInterval)
     }
 
-  }, [socket, editorRef.current, roomId]) // Add roomId to re-init on room change
+  }, [socket, editorRef.current, roomId, yDoc, yText]) // Add roomId to re-init on room change
 
   useEffect(() => {
     if (!editorRef.current || !monacoRef.current) return

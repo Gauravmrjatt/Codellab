@@ -71,6 +71,12 @@ export function ProblemSolver({ question, currentUserId, contestId, userRooms = 
     const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false)
     const [roomSearchQuery, setRoomSearchQuery] = useState("")
 
+    useEffect(() => {
+        setCode(question.starterCode || "")
+        setResult(null)
+        setConsoleTab("testcase")
+    }, [question.id, question.starterCode])
+
     const handleRun = async () => {
         if (!code) return
         setIsRunning(true)

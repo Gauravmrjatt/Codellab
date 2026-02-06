@@ -41,10 +41,17 @@ export function TestCasesPanel({
 
   const { testCaseResults } = useCodeEditorStore();
 
+  // Reset active index when question changes
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [questionId]);
+
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
+        setTestCases([]);
+        setInputs([]);
         
         // Fetch Question to get input definitions
         const qRes = await fetch(`/api/questions/${questionId}`);
