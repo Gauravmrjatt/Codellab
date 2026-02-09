@@ -1,0 +1,1617 @@
+openapi: 3.0.3
+info:
+  title: Codellab API
+  description: |
+    RESTful API for Codellab - A collaborative coding platform with real-time features, code execution, and contest management.
+    
+    ## Authentication
+    Most endpoints require authentication via NextAuth session cookies. Include the session cookie in requests to authenticated endpoints.
+    
+    ## Base URLs
+    - Development: `http://localhost:3000`
+    - Production: Configure via `NEXTAUTH_URL` environment variable
+  version: 1.0.0
+  contact:
+    name: Codellab API Support
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.codellab.example.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Rooms
+    description: Collaborative room management
+  - name: Files
+    description: File management within rooms
+  - name: Questions
+    description: Coding question management
+  - name: Contests
+    description: Contest creation and participation
+  - name: Judge
+    description: Code execution and testing
+  - name: Submissions
+    description: Code submission tracking
+  - name: Admin
+    description: Administrative endpoints
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth session cookie
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "clx1234567890"
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [USER, ADMIN]
+          example: "USER"
+        avatarUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastSeen:
+          type: string
+          format: date-time
+          nullable: true
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "room_abc123"
+        name:
+          type: string
+          example: "Algorithm Study Group"
+        description:
+          type: string
+          nullable: true
+        inviteCode:
+          type: string
+          example: "XyZ9AbC123"
+        ownerId:
+          type: string
+        isPublic:
+          type: boolean
+          default: false
+        maxParticipants:
+          type: integer
+          default: 5
+        language:
+          type: string
+          default: "javascript"
+          example: "javascript"
+        difficulty:
+          type: string
+          default: "medium"
+          example: "medium"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          example: "solution.js"
+        path:
+          type: string
+          example: "/src/solution.js"
+        content:
+          type: string
+          example: "function solve(arr) { return arr.sort(); }"
+        roomId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          example: "Two Sum"
+        slug:
+          type: string
+          example: "two-sum"
+        description:
+          type: string
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        points:
+          type: integer
+          default: 100
+        timeLimit:
+          type: integer
+          description: Time limit in milliseconds
+          default: 1000
+        memoryLimit:
+          type: integer
+          description: Memory limit in MB
+          default: 256
+        functionName:
+          type: string
+          default: "solve"
+        starterCode:
+          type: string
+          nullable: true
+        solution:
+          type: string
+          nullable: true
+        authorId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TestCase:
+      type: object
+      properties:
+        id:
+          type: string
+        questionId:
+          type: string
+        inputs:
+          type: object
+          description: JSON object containing test inputs
+        expectedOutput:
+          type: object
+          description: Expected output for the test case
+        visibility:
+          type: string
+          enum: [PUBLIC, HIDDEN]
+          default: PUBLIC
+        isPublic:
+          type: boolean
+          default: false
+
+    Contest:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          example: "Weekly Coding Challenge"
+        description:
+          type: string
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        language:
+          type: string
+          example: "javascript"
+        status:
+          type: string
+          enum: 
+            - PENDING
+            - ACCEPTED
+            - WRONG_ANSWER
+            - TIME_LIMIT_EXCEEDED
+            - MEMORY_LIMIT_EXCEEDED
+            - RUNTIME_ERROR
+            - COMPILATION_ERROR
+        runtime:
+          type: integer
+          nullable: true
+          description: Execution time in milliseconds
+        memory:
+          type: integer
+          nullable: true
+          description: Memory used in MB
+        passedTests:
+          type: integer
+          nullable: true
+        totalTests:
+          type: integer
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+        userId:
+          type: string
+        questionId:
+          type: string
+        contestId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ExecutionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        output:
+          type: string
+          nullable: true
+        logs:
+          type: array
+          items:
+            type: string
+        error:
+          type: string
+          nullable: true
+        runtime:
+          type: integer
+          description: Execution time in milliseconds
+        memory:
+          type: integer
+          description: Memory used in MB
+        status:
+          type: string
+          enum:
+            - ACCEPTED
+            - WRONG_ANSWER
+            - TIME_LIMIT_EXCEEDED
+            - RUNTIME_ERROR
+            - COMPILATION_ERROR
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        roomId:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [admin, writer, reader]
+        canWriteCode:
+          type: boolean
+          default: true
+        canWriteNotes:
+          type: boolean
+          default: true
+        canDraw:
+          type: boolean
+          default: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Error message"
+
+paths:
+  # ==================== Authentication ====================
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with username, email, and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  example: "johndoe"
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "securePassword123"
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticate user and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "securePassword123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Retrieve the currently authenticated user's information
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Rooms ====================
+  /api/rooms:
+    post:
+      tags:
+        - Rooms
+      summary: Create a new room
+      description: Create a collaborative coding room
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  example: "Algorithm Study Group"
+                description:
+                  type: string
+                  example: "Practice algorithms together"
+                isPublic:
+                  type: boolean
+                  default: false
+                language:
+                  type: string
+                  default: "javascript"
+                difficulty:
+                  type: string
+                  default: "medium"
+                maxParticipants:
+                  type: integer
+                  default: 5
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Rooms
+      summary: List public rooms
+      description: Get all public rooms
+      responses:
+        '200':
+          description: List of public rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Room'
+                    - type: object
+                      properties:
+                        _count:
+                          type: object
+                          properties:
+                            members:
+                              type: integer
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/my:
+    get:
+      tags:
+        - Rooms
+      summary: Get user's rooms
+      description: Retrieve all rooms the current user is a member of
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: User's rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}:
+    get:
+      tags:
+        - Rooms
+      summary: Get room details
+      description: Retrieve detailed information about a specific room
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Room ID
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Room'
+                  - type: object
+                    properties:
+                      members:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            user:
+                              $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}/join:
+    post:
+      tags:
+        - Rooms
+      summary: Join a room
+      description: Join an existing room as a member
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Room ID
+      responses:
+        '200':
+          description: Successfully joined room
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  room:
+                    $ref: '#/components/schemas/Room'
+        '400':
+          description: Already a member or room is full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}/creator:
+    get:
+      tags:
+        - Rooms
+      summary: Get room creator
+      description: Check if the current user is the creator of the room
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Room ID
+      responses:
+        '200':
+          description: Creator check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isCreator:
+                    type: boolean
+
+  /api/rooms/invite/{code}:
+    get:
+      tags:
+        - Rooms
+      summary: Get room by invite code
+      description: Retrieve room information using an invite code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Room invite code
+      responses:
+        '200':
+          description: Room found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          description: Invalid invite code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}/files:
+    get:
+      tags:
+        - Files
+      summary: Get room files
+      description: Retrieve all files in a room
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Room ID
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/File'
+
+    post:
+      tags:
+        - Files
+      summary: Create file in room
+      description: Create a new file in the specified room
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Room ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - path
+                - content
+              properties:
+                name:
+                  type: string
+                  example: "solution.js"
+                path:
+                  type: string
+                  example: "/src/solution.js"
+                content:
+                  type: string
+                  example: "function solve() {}"
+      responses:
+        '201':
+          description: File created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        '403':
+          description: No write permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Files ====================
+  /api/files:
+    get:
+      tags:
+        - Files
+      summary: Get files by room
+      description: Retrieve files for a specific room
+      parameters:
+        - name: roomId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Room ID
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/File'
+        '400':
+          description: Missing roomId parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Files
+      summary: Create a new file
+      description: Create a new file in a room
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - path
+                - content
+                - roomId
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                path:
+                  type: string
+                content:
+                  type: string
+                roomId:
+                  type: string
+      responses:
+        '201':
+          description: File created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No write permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Files
+      summary: Update file content
+      description: Update the content of an existing file
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - content
+              properties:
+                id:
+                  type: string
+                content:
+                  type: string
+                roomId:
+                  type: string
+      responses:
+        '200':
+          description: File updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No write permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Files
+      summary: Delete a file
+      description: Delete an existing file
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: File ID
+        - name: roomId
+          in: query
+          schema:
+            type: string
+          description: Room ID (for permission check)
+      responses:
+        '200':
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File deleted successfully"
+        '400':
+          description: Missing id parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No write permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Questions ====================
+  /api/questions:
+    get:
+      tags:
+        - Questions
+      summary: List questions
+      description: Get all coding questions with optional filtering
+      parameters:
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [EASY, MEDIUM, HARD]
+          description: Filter by difficulty
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter by tag
+      responses:
+        '200':
+          description: List of questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+
+    post:
+      tags:
+        - Questions
+      summary: Create a question
+      description: Create a new coding question (admin only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - difficulty
+              properties:
+                title:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                difficulty:
+                  type: string
+                  enum: [EASY, MEDIUM, HARD]
+                points:
+                  type: integer
+                timeLimit:
+                  type: integer
+                memoryLimit:
+                  type: integer
+                functionName:
+                  type: string
+                starterCode:
+                  type: string
+                solution:
+                  type: string
+      responses:
+        '201':
+          description: Question created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/questions/{id}:
+    get:
+      tags:
+        - Questions
+      summary: Get question details
+      description: Retrieve detailed information about a specific question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      responses:
+        '200':
+          description: Question details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Question'
+                  - type: object
+                    properties:
+                      inputs:
+                        type: array
+                        items:
+                          type: object
+                      output:
+                        type: object
+                      testCases:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TestCase'
+        '404':
+          description: Question not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Questions
+      summary: Update question
+      description: Update an existing question (admin only)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                difficulty:
+                  type: string
+                  enum: [EASY, MEDIUM, HARD]
+                points:
+                  type: integer
+                timeLimit:
+                  type: integer
+                memoryLimit:
+                  type: integer
+                starterCode:
+                  type: string
+                solution:
+                  type: string
+      responses:
+        '200':
+          description: Question updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/questions/{id}/testcases:
+    get:
+      tags:
+        - Questions
+      summary: Get test cases
+      description: Retrieve test cases for a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      responses:
+        '200':
+          description: List of test cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestCase'
+
+  /api/questions/{id}/default-code:
+    get:
+      tags:
+        - Questions
+      summary: Get default starter code
+      description: Retrieve the starter code template for a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Question ID
+      responses:
+        '200':
+          description: Starter code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  functionName:
+                    type: string
+
+  # ==================== Contests ====================
+  /api/contests:
+    get:
+      tags:
+        - Contests
+      summary: List contests
+      description: Get all contests
+      responses:
+        '200':
+          description: List of contests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contest'
+
+    post:
+      tags:
+        - Contests
+      summary: Create contest
+      description: Create a new contest (admin only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - startTime
+                - endTime
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                startTime:
+                  type: string
+                  format: date-time
+                endTime:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Contest created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/contests/{id}:
+    get:
+      tags:
+        - Contests
+      summary: Get contest details
+      description: Retrieve detailed information about a contest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Contest ID
+      responses:
+        '200':
+          description: Contest details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Contest'
+                  - type: object
+                    properties:
+                      questions:
+                        type: array
+                        items:
+                          type: object
+                      participants:
+                        type: array
+                        items:
+                          type: object
+
+    post:
+      tags:
+        - Contests
+      summary: Join contest
+      description: Register for a contest
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Contest ID
+      responses:
+        '200':
+          description: Successfully joined contest
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Judge ====================
+  /api/judge/run:
+    post:
+      tags:
+        - Judge
+      summary: Run code
+      description: Execute code against test cases without submitting
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - language
+                - questionId
+              properties:
+                code:
+                  type: string
+                  example: "function solve(arr) { return arr.sort(); }"
+                language:
+                  type: string
+                  enum: [javascript, python, java, cpp]
+                  example: "javascript"
+                questionId:
+                  type: string
+      responses:
+        '200':
+          description: Execution results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ExecutionResult'
+                        - type: object
+                          properties:
+                            testCase:
+                              type: object
+                            passed:
+                              type: boolean
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Judge
+      summary: Health check
+      description: Check if judge service is available
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /api/judge/submit:
+    post:
+      tags:
+        - Judge
+      summary: Submit solution
+      description: Submit code solution for evaluation
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - language
+                - questionId
+              properties:
+                code:
+                  type: string
+                language:
+                  type: string
+                  enum: [javascript, python, java, cpp]
+                questionId:
+                  type: string
+                contestId:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Submission result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Submissions ====================
+  /api/submissions:
+    get:
+      tags:
+        - Submissions
+      summary: Get user submissions
+      description: Retrieve submissions for the current user
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: questionId
+          in: query
+          schema:
+            type: string
+          description: Filter by question ID
+        - name: contestId
+          in: query
+          schema:
+            type: string
+          description: Filter by contest ID
+      responses:
+        '200':
+          description: List of submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Submissions
+      summary: Create submission
+      description: Create a new code submission
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - language
+                - questionId
+              properties:
+                code:
+                  type: string
+                language:
+                  type: string
+                questionId:
+                  type: string
+                contestId:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Admin ====================
+  /api/admin/cheat-logs:
+    get:
+      tags:
+        - Admin
+      summary: Get cheat detection logs
+      description: Retrieve cheat detection logs (admin only)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+          description: Filter by user ID
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by cheat type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+          description: Number of logs to retrieve
+      responses:
+        '200':
+          description: List of cheat logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    userId:
+                      type: string
+                    submissionId:
+                      type: string
+                      nullable: true
+                    type:
+                      type: string
+                      example: "INSTANT_PASTE"
+                    severity:
+                      type: integer
+                      minimum: 1
+                      maximum: 10
+                    metadata:
+                      type: object
+                    createdAt:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
